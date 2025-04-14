@@ -168,15 +168,6 @@ if __name__ == '__main__':
 
     fsdp_training(config)
     
-    # some sleep is needed before destroying the process group to avoid the following error:
-    # *** Process received signal ***
-    # Signal: Aborted (6)
-    # Signal code:  (-6)
-    # [ 0] /lib/x86_64-linux-gnu/libpthread.so.0(+0x14420)[0x7fac77906420]
-    # 
-    # [28] /data/pytorch_unit_test/lib/libtorch_cpu.so(_ZSt8_DestroyISt8functionIFvvEEEvPT_+0x1c)[0x7feea66ce741]
-    # [29] /data/pytorch_unit_test/lib/libtorch_cpu.so(_ZNSt12_Destroy_auxILb0EE9__destroyIPSt8functionIFvvEEEEvT_S6_+0x32)[0x7feea66a568f]
-    time.sleep(5)
     dist.destroy_process_group()
 
 
