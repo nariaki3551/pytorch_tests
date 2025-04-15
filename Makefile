@@ -1,15 +1,19 @@
-.PHONY: all run_test_allgather run_test_fsdp run_mpi_cuda_support_check
+.PHONY: run_test_allgather run_test_fsdp run_cuda_support_check_mpi run_check_ucc_sharp_support
 
-all: build_check
+build_mpi:
+	$(MAKE) -C ./src/mpi
 
-build_check:
-	$(MAKE) -C ./src/check
+build_ucc:
+	$(MAKE) -C ./src/ucc
 
-run_test_allgather: build_check
+run_test_allgather:
 	mpirun -n 2 --allow-run-as-root python3 ./src/collective/test_allgather.py
 
-run_test_fsdp: build_check
+run_test_fsdp:
 	mpirun -n 2 --allow-run-as-root python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
 
-run_mpi_cuda_support_check: build_check
-	$(MAKE) -C ./src/check run_mpi_cuda_support_check
+run_cuda_support_check_mpi: build_mpi
+	$(MAKE) -C ./src/mpi run_cuda_support_check_mpi
+
+run_check_sharp_support_ucc: build_ucc
+	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc
