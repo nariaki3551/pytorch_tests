@@ -12,8 +12,8 @@ run_test_allgather:
 run_test_fsdp:
 	mpirun -n 2 --allow-run-as-root python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
 
-run_cuda_support_check_mpi: build_mpi
-	$(MAKE) -C ./src/mpi run_cuda_support_check_mpi
+run_test_mpi: build_mpi
+	$(MAKE) -C ./src/mpi run_test_all
 
-run_check_sharp_support_ucc: build_ucc
+run_test_ucc: build_ucc
 	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc
