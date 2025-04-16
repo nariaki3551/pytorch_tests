@@ -25,6 +25,14 @@ run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
 	mpirun -n 2 --allow-run-as-root $<
 
+run_test_allgather_mpi_verbose: $(BIN_DIR)/test_allgather_mpi
+	mpirun -n 2 --allow-run-as-root \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace \
+		-- $<
+
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
 	mpirun -n 2 --allow-run-as-root $<
 
