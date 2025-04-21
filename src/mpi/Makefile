@@ -1,9 +1,12 @@
+include ../../make/mpi_config.mk
+
 CXX = mpicxx
 INCLUDE_DIRS = -I/usr/local/cuda/include
 CXX_FLAGS = -g -O0
 LIB_DIRS = -L/usr/local/cuda/lib64
 LIBS = -lcudart -lmpi
 BIN_DIR = ../../bin
+HOSTFILE ?= ../../hostfile
 
 SRCS = check_cuda_support.cpp test_allgather.cpp test_allgather_cuda.cpp
 
@@ -20,10 +23,10 @@ $(BIN_DIR)/%_mpi: %.cpp
 run_test_all: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_cuda_mpi
 
 run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
-	mpirun -np 1 --allow-run-as-root $<
+	mpirun -np 1 $(MPI_MCAST_OPTS) $(MCAST_VERBOSE_OPTS) $<
 
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 --allow-run-as-root $<
+	mpirun -n 2 $(MPI_MCAST_OPTS) $(MCAST_VERBOSE_OPTS) $<
 
 run_test_allgather_mpi_verbose: $(BIN_DIR)/test_allgather_mpi
 	mpirun -n 2 --allow-run-as-root \
@@ -34,7 +37,7 @@ run_test_allgather_mpi_verbose: $(BIN_DIR)/test_allgather_mpi
 		-- $<
 
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
-	mpirun -n 2 --allow-run-as-root $<
+	mpirun -n 2 $(MPI_MCAST_OPTS) $(MCAST_VERBOSE_OPTS) $<
 
 clean:
 	rm -f $(TARGETS)
