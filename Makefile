@@ -7,10 +7,10 @@ build_ucc:
 	$(MAKE) -C ./src/ucc
 
 run_test_allgather:
-	mpirun -n 2 --allow-run-as-root python3 ./src/collective/test_allgather.py
+	mpirun -n 2 python3 ./src/collective/test_allgather.py
 
 run_test_fsdp:
-	mpirun -n 2 --allow-run-as-root python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
+	mpirun -n 2 python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
 
 run_test_mpi: build_mpi
 	$(MAKE) -C ./src/mpi run_test_all

@@ -20,13 +20,13 @@ $(BIN_DIR)/%_mpi: %.cpp
 run_test_all: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_cuda_mpi
 
 run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
-	mpirun -np 1 --allow-run-as-root $<
+	mpirun -np 1 $<
 
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 --allow-run-as-root $<
+	mpirun -n 2 $<
 
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
-	mpirun -n 2 --allow-run-as-root $<
+	mpirun -n 2 $<
 
 clean:
 	rm -f $(TARGETS)
