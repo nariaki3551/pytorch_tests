@@ -7,7 +7,7 @@ LIB_DIRS = -L/usr/local/cuda/lib64
 LIBS = -lcudart -lmpi
 BIN_DIR = ../../bin
 
-SRCS = check_cuda_support.cpp test_allgather.cpp test_allgather_cuda.cpp
+SRCS = check_cuda_support.cpp test_allgather.cpp test_allgather_cuda.cpp test_reducescatter.cpp test_reducescatter_cuda.cpp
 
 BINS = $(SRCS:.cpp=)
 TARGETS = $(addprefix $(BIN_DIR)/, $(addsuffix _mpi, $(BINS)))
