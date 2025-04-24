@@ -1,4 +1,3 @@
-HOSTFILE ?=
 SHARP_VERBOSE ?= 0
 CXX = mpicxx
 INCLUDE_DIRS = -I/usr/local/cuda/include
@@ -22,12 +21,6 @@ $(BIN_DIR)/%_mpi: %.cpp
 run_test: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_cuda_mpi run_test_reducescatter_mpi run_test_reducescatter_cuda_mpi
 run_sharp_test: run_test_reducescatter_sharp_mpi
 
-ifeq ($(HOSTFILE), )
-	HOSTFILE_OPS =
-else
-	HOSTFILE_OPS = --hostfile $(HOSTFILE)
-endif
-
 ifeq ($(SHARP_VERBOSE), 1)
 SHARP_VERBOSE_OPTS = --mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3
 else
@@ -38,20 +31,17 @@ run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
 	mpirun -np 1 $<
 
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 $(HOSTFILE_OPS) $<
+	mpirun -n 2 $<
 
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
-	mpirun -n 2 $(HOSTFILE_OPS) $<
+	mpirun -n 2 $<
 
 run_test_reducescatter_mpi: $(BIN_DIR)/test_reducescatter_mpi
-	mpirun -n 2 $(HOSTFILE_OPS) $<
+	mpirun -n 2 $<
 
 run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
-	@if [ -z "$(HOSTFILE_OPS)" ]; then \
-		echo "\n\n\tHOSTFILE is required for sharp tests; \n\tUsage: make (target) HOSTFILE=/path/to/your/hostfile\n\n"; \
-		exit 1; \
-	fi
-	mpirun -n 2 $(HOSTFILE_OPS) \
+	mpirun -n 2 --host snail02:1,snail03:1 \
+	    --mca plm_rsh_args "-p 2222" \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
 		-x UCC_CL_BASIC_TLS=spin,ucp,sharp \
 		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf \
