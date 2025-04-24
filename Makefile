@@ -44,16 +44,14 @@ build_mpi:
 build_ucc:
 	$(MAKE) -C ./src/ucc
 
-run_test_allgather:
+run_test_torch:
 	$(MAKE) -C ./src/collective run_test_allgather
-
-run_test_mcast_allgather:
-	$(MAKE) -C ./src/collective run_test_mcast_allgather MCAST_OPS="$(MCAST_OPS)"
-
-run_test_reducescatter:
 	$(MAKE) -C ./src/collective run_test_reducescatter
 
-run_test_sharp_reduce_scatter:
+run_test_mcast_torch:
+	$(MAKE) -C ./src/collective run_test_mcast_allgather MCAST_OPS="$(MCAST_OPS)"
+
+run_test_sharp_torch:
 	$(MAKE) -C ./src/collective run_test_sharp_reducescatter SHARP_OPS="$(SHARP_OPS)"
 
 run_test_fsdp:

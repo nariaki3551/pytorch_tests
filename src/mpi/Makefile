@@ -24,7 +24,7 @@ $(BIN_DIR)/%_mpi: %.cpp
 
 run_test: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_cuda_mpi run_test_reducescatter_mpi run_test_reducescatter_cuda_mpi
 run_test_mcast: run_test_allgather_mcast_mpi
-run_sharp_test: run_test_reducescatter_sharp_mpi
+run_sharp_test: run_test_reducescatter_sharp_mpi run_test_reducescatter_sharp_cuda_mpi
 
 run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
 	mpirun -np 1 $<
@@ -46,6 +46,9 @@ run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
 
 run_test_reducescatter_cuda_mpi: $(BIN_DIR)/test_reducescatter_cuda_mpi
 	mpirun -n 2 $<
+
+run_test_reducescatter_sharp_cuda_mpi: $(BIN_DIR)/test_reducescatter_cuda_mpi
+	mpirun -n 2 $(SHARP_OPS) $<
 
 clean:
 	rm -f $(TARGETS)
