@@ -19,7 +19,14 @@ all: $(TARGETS)
 $(BIN_DIR)/%_mpi: %.cpp
 	$(CXX) $(CXX_FLAGS) -o $@ $< $(INCLUDE_DIRS) $(LIB_DIRS) $(LIBS)
 
-run_test_all: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_cuda_mpi run_test_reducescatter_mpi run_test_reducescatter_cuda_mpi
+run_test: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_cuda_mpi run_test_reducescatter_mpi run_test_reducescatter_cuda_mpi
+run_sharp_test: run_test_reducescatter_sharp_mpi
+
+ifeq ($(HOSTFILE), )
+	HOSTFILE_OPS =
+else
+	HOSTFILE_OPS = --hostfile $(HOSTFILE)
+endif
 
 ifeq ($(SHARP_VERBOSE), 1)
 SHARP_VERBOSE_OPTS = --mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3
@@ -31,19 +38,20 @@ run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
 	mpirun -np 1 $<
 
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 $<
+	mpirun -n 2 $(HOSTFILE_OPS) $<
 
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
-	mpirun -n 2 $<
+	mpirun -n 2 $(HOSTFILE_OPS) $<
 
 run_test_reducescatter_mpi: $(BIN_DIR)/test_reducescatter_mpi
-	mpirun -n 2 $(MPI_HOSTFILE_OPTS) $<
+	mpirun -n 2 $(HOSTFILE_OPS) $<
 
 run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
-ifeq ($(HOSTFILE), )
-	$(error HOSTFILE is not set)
-endif
-	mpirun -n 2 --hostfile $(HOSTFILE) \
+	@if [ -z "$(HOSTFILE_OPS)" ]; then \
+		echo "\n\n\tHOSTFILE is required for sharp tests; \n\tUsage: make (target) HOSTFILE=/path/to/your/hostfile\n\n"; \
+		exit 1; \
+	fi
+	mpirun -n 2 $(HOSTFILE_OPS) \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
 		-x UCC_CL_BASIC_TLS=spin,ucp,sharp \
 		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf \
