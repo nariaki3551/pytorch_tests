@@ -9,6 +9,7 @@ LIB_DIRS = -L/usr/local/cuda/lib64
 LIBS = -lcudart -lmpi
 BIN_DIR = ../../bin
 HOSTFILE ?= ../../hostfile
+MPIRUN := $(shell which mpirun)
 
 SRCS = check_cuda_support.cpp test_allgather.cpp test_allgather_cuda.cpp test_reducescatter.cpp test_reducescatter_cuda.cpp
 
@@ -27,28 +28,28 @@ run_test_mcast: run_test_allgather_mcast_mpi
 run_sharp_test: run_test_reducescatter_sharp_mpi run_test_reducescatter_sharp_cuda_mpi
 
 run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
-	mpirun -np 1 $<
+	$(MPIRUN) -np 1 $<
 
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 $<
+	$(MPIRUN) -n 2 $<
 
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
-	mpirun -n 2 $<
+	$(MPIRUN) -n 2 $<
 
 un_test_reducescatter_mpi: $(BIN_DIR)/test_reducescatter_mpi
-	mpirun -n 2 $<
+	$(MPIRUN) -n 2 $<
 
 run_test_allgather_mcast_mpi: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 $(MCAST_OPS) -- $<
+	$(MPIRUN) -n 2 $(MCAST_OPS) -- $<
 
 run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
-	mpirun -n 2 $(SHARP_OPS) -- $<
+	$(MPIRUN) -n 2 $(SHARP_OPS) -- $<
 
 run_test_reducescatter_cuda_mpi: $(BIN_DIR)/test_reducescatter_cuda_mpi
-	mpirun -n 2 $<
+	$(MPIRUN) -n 2 $<
 
 run_test_reducescatter_sharp_cuda_mpi: $(BIN_DIR)/test_reducescatter_cuda_mpi
-	mpirun -n 2 $(SHARP_OPS) $<
+	$(MPIRUN) -n 2 $(SHARP_OPS) $<
 
 clean:
 	rm -f $(TARGETS)

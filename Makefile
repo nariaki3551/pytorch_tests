@@ -1,5 +1,6 @@
 SHARP_VERBOSE ?= 0
 MCAST_VERBOSE ?= 0
+MPIRUN := $(shell which mpirun)
 
 .PHONY: run_test_allgather run_test_fsdp run_cuda_support_check_mpi run_check_ucc_sharp_support
 
@@ -55,7 +56,7 @@ run_test_sharp_torch:
 	$(MAKE) -C ./src/collective run_test_sharp_reducescatter SHARP_OPS="$(SHARP_OPS)"
 
 run_test_fsdp:
-	mpirun -n 2 python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
+	$(MPIRUN) -n 2 python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
 
 run_test_mpi: build_mpi
 	$(MAKE) -C ./src/mpi run_test
