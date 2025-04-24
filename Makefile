@@ -17,7 +17,7 @@ MCAST_VERBOSE_OPTS =
 endif
 
 SHARP_OPS = --host snail02:1,snail03:1 \
-	    --mca plm_rsh_args "-p 2222" \
+	    --mca plm_rsh_args \"-p 2222\" \
 		-x CUDA_VISIBLE_DEVICES=1,0 \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
 		-x UCC_CL_BASIC_TLS=sharp,ucp \
@@ -28,7 +28,7 @@ SHARP_OPS = --host snail02:1,snail03:1 \
 		$(SHARP_VERBOSE_OPTS)
 
 MCAST_OPS = --host snail02:1,snail03:1 \
-	    --mca plm_rsh_args "-p 2222" \
+	    --mca plm_rsh_args \"-p 2222\" \
 		-x CUDA_VISIBLE_DEVICES=1,0 \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
 		-x UCC_CL_BASIC_TLS=spin,ucp \
@@ -45,10 +45,16 @@ build_ucc:
 	$(MAKE) -C ./src/ucc
 
 run_test_allgather:
-	mpirun -n 2 python3 ./src/collective/test_allgather.py
+	$(MAKE) -C ./src/collective run_test_allgather
 
 run_test_mcast_allgather:
-	mpirun -n 2 $(MCAST_OPS) python3 ./src/collective/test_allgather.py
+	$(MAKE) -C ./src/collective run_test_mcast_allgather MCAST_OPS="$(MCAST_OPS)"
+
+run_test_reducescatter:
+	$(MAKE) -C ./src/collective run_test_reducescatter
+
+run_test_sharp_reduce_scatter:
+	$(MAKE) -C ./src/collective run_test_sharp_reducescatter SHARP_OPS="$(SHARP_OPS)"
 
 run_test_fsdp:
 	mpirun -n 2 python3 ./src/training/test_fsdp.py --model_scale 1 --num_epochs 10
@@ -57,10 +63,10 @@ run_test_mpi: build_mpi
 	$(MAKE) -C ./src/mpi run_test
 
 run_test_sharp_mpi: build_mpi
-	$(MAKE) -C ./src/mpi run_sharp_test
+	$(MAKE) -C ./src/mpi run_sharp_test SHARP_OPS="$(SHARP_OPS)"
 
 run_test_mcast_mpi: build_mpi
-	$(MAKE) -C ./src/mpi run_test_mcast_mpi
+	$(MAKE) -C ./src/mpi run_test_mcast_mpi MCAST_OPS="$(MCAST_OPS)"
 
 run_test_ucc: build_ucc
 	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc

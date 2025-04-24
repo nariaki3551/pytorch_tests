@@ -1,4 +1,7 @@
 
+SHARP_OPS ?= 
+MCAST_OPS ?= 
+
 CXX = mpicxx
 INCLUDE_DIRS = -I/usr/local/cuda/include
 CXX_FLAGS = -g -O0
