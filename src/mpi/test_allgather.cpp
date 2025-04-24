@@ -8,8 +8,8 @@ struct Context {
     int rank;
     int size;
     int count;
-    int *send_buff;
-    int *recv_buff;
+    int* send_buff;
+    int* recv_buff;
 };
 
 double do_allgather(Context *ctx) {
@@ -26,13 +26,11 @@ double do_allgather(Context *ctx) {
 double do_iallgather(Context *ctx) {
     MPI_Request request;
     double elapsed_time = - MPI_Wtime();
-
     MPI_Iallgather(
         ctx->send_buff, ctx->count, MPI_INT,
         ctx->recv_buff, ctx->count, MPI_INT,
         MPI_COMM_WORLD, &request
     );
-
     MPI_Wait(&request, MPI_STATUS_IGNORE);
     elapsed_time += MPI_Wtime();
     return elapsed_time;
