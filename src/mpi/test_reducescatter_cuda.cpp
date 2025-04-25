@@ -88,12 +88,12 @@ int main(int argc, char** argv) {
     }
     cudaMemcpy(ctx.send_buff, host_buff, ctx.count * ctx.size * sizeof(int), cudaMemcpyHostToDevice);
 
-    printf("rank %d: start reducescatter with count %d\n", ctx.rank, ctx.count);
+    printf("rank %d: start reducescatter with count %d, %ld bytes / process\n", ctx.rank, ctx.count, ctx.count * sizeof(int));
     elapsed_time = do_reduce_scatter(&ctx);
     printf("rank %d: end reducescatter, time: %f\n", ctx.rank, elapsed_time);
     check_recv_buff(&ctx, host_buff);
 
-    printf("rank %d: start ireducescatter with count %d\n", ctx.rank, ctx.count);
+    printf("rank %d: start ireducescatter with count %d, %ld bytes / process\n", ctx.rank, ctx.count, ctx.count * sizeof(int));
     elapsed_time = do_ireduce_scatter(&ctx);
     printf("rank %d: end ireducescatter, time: %f\n", ctx.rank, elapsed_time);
     check_recv_buff(&ctx, host_buff);
