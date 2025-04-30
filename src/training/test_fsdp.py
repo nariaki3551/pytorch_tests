@@ -15,6 +15,8 @@ from torch.optim.lr_scheduler import StepLR
 
 class LinearWrapper(nn.Linear):
     ...
+class LinearWrapper0(LinearWrapper):
+    ...
 class LinearWrapper1(LinearWrapper):
     ...
 class LinearWrapper2(LinearWrapper):
@@ -23,38 +25,47 @@ class LinearWrapper3(LinearWrapper):
     ...
 class LinearWrapper4(LinearWrapper):
     ...
-class LinearWrapper5(LinearWrapper):
-    ...
 
 
 class SimpleModel(nn.Module):
     def __init__(self, scale: int):
         super(SimpleModel, self).__init__()
-        self.sequential1 = LinearWrapper1(512, 1024 * scale)
+        self.sequential0 = LinearWrapper0(512, 1024 * scale)
+        self.sequential1 = LinearWrapper1(1024 * scale, 1024 * scale)
         self.sequential2 = LinearWrapper2(1024 * scale, 1024 * scale)
         self.sequential3 = LinearWrapper3(1024 * scale, 1024 * scale)
-        self.sequential4 = LinearWrapper4(1024 * scale, 1024 * scale)
-        self.sequential5 = LinearWrapper5(1024 * scale, 512)
-        self.last = nn.Linear(512, 10)
+        self.sequential4 = LinearWrapper4(1024 * scale, 512 * scale)
+        self.last = nn.Linear(512 * scale, 10)
 
-        # Register backward hooks for all sequential layers
+        # Register forward/backward hooks for all sequential layers
+        def forward_hook(module, input, output):
+            print(f"Forward pass - {module.__class__.__name__}")
+            return output
+
         def backward_hook(module, grad_input, grad_output):
             print(f"Backward pass - {module.__class__.__name__}")
             return grad_input
 
+        self.sequential0.register_forward_hook(forward_hook)
+        self.sequential1.register_forward_hook(forward_hook)
+        self.sequential2.register_forward_hook(forward_hook)
+        self.sequential3.register_forward_hook(forward_hook)
+        self.sequential4.register_forward_hook(forward_hook)
+        self.last.register_forward_hook(forward_hook)
+
+        self.sequential0.register_full_backward_hook(backward_hook)
         self.sequential1.register_full_backward_hook(backward_hook)
         self.sequential2.register_full_backward_hook(backward_hook)
         self.sequential3.register_full_backward_hook(backward_hook)
         self.sequential4.register_full_backward_hook(backward_hook)
-        self.sequential5.register_full_backward_hook(backward_hook)
         self.last.register_full_backward_hook(backward_hook)
 
     def forward(self, x):
+        x = torch.relu(self.sequential0(x))
         x = torch.relu(self.sequential1(x))
         x = torch.relu(self.sequential2(x))
         x = torch.relu(self.sequential3(x))
         x = torch.relu(self.sequential4(x))
-        x = torch.relu(self.sequential5(x))
         return self.last(x)
 
 
@@ -71,7 +82,7 @@ def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
 @dataclasses.dataclass
 class Config:
     sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
-    model_scale: int = 5
+    model_scale: int = 1
     num_epochs: int = 5
 
 def fsdp_training(config: Config):
@@ -132,11 +143,11 @@ if __name__ == '__main__':
         help='Debug mode to use for training'
     )
     parser.add_argument(
-        '--backend', type=str, choices=['mpi', 'nccl', 'ucc'], default='mpi',
+        '--backend', type=str, choices=['mpi', 'nccl', 'ucc', 'gloo'], default='mpi',
         help='Backend to use for training'
     )
     parser.add_argument(
-        "--model_scale", type=int, default=5,
+        "--model_scale", type=int, default=1,
         help='Model scale to use for training'
     )
     parser.add_argument(
@@ -162,6 +173,10 @@ if __name__ == '__main__':
         torch.cuda.set_device(local_rank)
     elif args.backend == 'mpi':
         dist.init_process_group(backend=args.backend)
+    elif args.backend == 'gloo':
+        rank = int(os.environ["RANK"])
+        world_size = int(os.environ["WORLD_SIZE"])
+        dist.init_process_group(backend="gloo", rank=rank, world_size=world_size)
 
     if args.debug:
         import time; time.sleep(20)
