@@ -152,11 +152,13 @@ if __name__ == '__main__':
     )
 
     local_rank = int(os.getenv("LOCAL_RANK", 0))
+    if args.backend == 'mpi':
+        local_rank = int(os.getenv("OMPI_COMM_WORLD_RANK", 0)) # TODO: fix it
+    torch.cuda.set_device(local_rank)
 
     print("local_rank", local_rank, "backend", args.backend)
     if args.backend == 'mpi':
         dist.init_process_group(backend="mpi")
-        local_rank = dist.get_rank() # TODO: fix it
     elif args.backend == 'nccl':
         dist.init_process_group(backend="nccl", init_method="env://")
     elif args.backend == 'ucc':
@@ -168,7 +170,6 @@ if __name__ == '__main__':
     elif args.backend == 'gloo':
         dist.init_process_group(backend="gloo", init_method="env://")
 
-    torch.cuda.set_device(local_rank)
 
     if args.debug:
         import time; time.sleep(20)
