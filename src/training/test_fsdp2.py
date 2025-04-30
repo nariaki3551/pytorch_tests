@@ -6,7 +6,7 @@ import dataclasses
 import torch
 from torch import nn
 import torch.distributed as dist
-from torch.distributed.fsdp import FullyShardedDataParallel, ShardingStrategy
+from torch.distributed.fsdp import fully_shard
 import torch.optim as optim
 
 class LinearWrapper(nn.Linear):
@@ -65,19 +65,19 @@ class SimpleModel(nn.Module):
         return self.last(x)
 
 
-def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
-    if sharding_strategy == 'FULL_SHARD':
-        return ShardingStrategy.FULL_SHARD
-    elif sharding_strategy == 'HYBRID_SHARD':
-        return ShardingStrategy.HYBRID_SHARD
-    elif sharding_strategy == 'SHARD_GRAD_OP':
-        return ShardingStrategy.SHARD_GRAD_OP
-    else:
-        raise ValueError(f"Invalid sharding strategy: {sharding_strategy}")
+# def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
+#     if sharding_strategy == 'FULL_SHARD':
+#         return ShardingStrategy.FULL_SHARD
+#     elif sharding_strategy == 'HYBRID_SHARD':
+#         return ShardingStrategy.HYBRID_SHARD
+#     elif sharding_strategy == 'SHARD_GRAD_OP':
+#         return ShardingStrategy.SHARD_GRAD_OP
+#     else:
+#         raise ValueError(f"Invalid sharding strategy: {sharding_strategy}")
 
 @dataclasses.dataclass
 class Config:
-    sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
+    # sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     model_scale: int = 1
     num_epochs: int = 5
 
@@ -91,12 +91,8 @@ def fsdp_training(config: Config, local_rank: int):
         return isinstance(module, (SimpleModel, LinearWrapper))
 
     model = SimpleModel(config.model_scale, rank).to(device)
-    model = FullyShardedDataParallel(
+    model = fully_shard(
         model,
-        device_id=device,
-        sharding_strategy=config.sharding_strategy,
-        auto_wrap_policy=my_auto_wrap_policy,
-        limit_all_gathers=False,
     ).to(device)
 
     gpu_name = torch.cuda.get_device_name(local_rank)
@@ -150,17 +146,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = Config(
-        sharding_strategy=get_sharding_strategy(args.sharding_strategy),
+        # sharding_strategy=get_sharding_strategy(args.sharding_strategy),
         model_scale=args.model_scale,
         num_epochs=args.num_epochs,
     )
 
     local_rank = int(os.getenv("LOCAL_RANK", 0))
 
-    print("backend", args.backend)
+    print("local_rank", local_rank, "backend", args.backend)
     if args.backend == 'mpi':
         dist.init_process_group(backend="mpi")
-        local_rank = 0 # TODO: fix it
+        local_rank = dist.get_rank() # TODO: fix it
     elif args.backend == 'nccl':
         dist.init_process_group(backend="nccl", init_method="env://")
     elif args.backend == 'ucc':
@@ -171,6 +167,8 @@ if __name__ == '__main__':
             exit(0)
     elif args.backend == 'gloo':
         dist.init_process_group(backend="gloo", init_method="env://")
+
+    torch.cuda.set_device(local_rank)
 
     if args.debug:
         import time; time.sleep(20)
