@@ -7,9 +7,19 @@ endif
 run_test_fsdp_mpi:
 	$(PYTORCH_DEBUG_FLAGS) OMP_NUM_THREADS=1 \
 		mpirun -n 2 \
-		-- python3 test_fsdp.py --model_scale 1 --num_epochs 2 --backend mpi
+		-- python3 test_fsdp.py --model_scale 1 --num_epochs 3 --backend mpi
+
+run_test_fsdp_nccl:
+	$(PYTORCH_DEBUG_FLAGS) OMP_NUM_THREADS=1 \
+		torchrun --nproc-per-node 2 --master_addr="0.0.0.0" --master_port=23456 \
+		-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend nccl
+
+run_test_fsdp_ucc:
+	$(PYTORCH_DEBUG_FLAGS) OMP_NUM_THREADS=1 \
+		torchrun --nproc-per-node 2 --master_addr="0.0.0.0" --master_port=23456 \
+		-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend ucc
 
 run_test_fsdp_gloo:
 	$(PYTORCH_DEBUG_FLAGS) OMP_NUM_THREADS=1 \
 		torchrun --nproc-per-node 2 --master_addr="0.0.0.0" --master_port=23456 \
-		-- test_fsdp.py --model_scale 1 --num_epochs 2 --backend gloo
+		-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend gloo

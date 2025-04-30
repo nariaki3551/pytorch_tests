@@ -28,7 +28,7 @@ class LinearWrapper4(LinearWrapper):
 
 
 class SimpleModel(nn.Module):
-    def __init__(self, scale: int):
+    def __init__(self, scale: int, rank: int):
         super(SimpleModel, self).__init__()
         self.sequential0 = LinearWrapper0(512, 1024 * scale)
         self.sequential1 = LinearWrapper1(1024 * scale, 1024 * scale)
@@ -39,11 +39,11 @@ class SimpleModel(nn.Module):
 
         # Register forward/backward hooks for all sequential layers
         def forward_hook(module, input, output):
-            print(f"Forward pass - {module.__class__.__name__}")
+            print(f"[rank{rank}] Forward pass - {module.__class__.__name__}")
             return output
 
         def backward_hook(module, grad_input, grad_output):
-            print(f"Backward pass - {module.__class__.__name__}")
+            print(f"[rank{rank}] Backward pass - {module.__class__.__name__}")
             return grad_input
 
         self.sequential0.register_forward_hook(forward_hook)
@@ -88,13 +88,14 @@ class Config:
 def fsdp_training(config: Config):
     rank = dist.get_rank()
     world_size = dist.get_world_size()
-    device = torch.device('cuda', 0)
+    local_rank = int(os.environ["LOCAL_RANK"])
+    device = torch.device('cuda', local_rank)
     print(f"Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs}")
 
     def my_auto_wrap_policy(module: nn.Module, recurse: bool, nonwrapped_numel: int):
         return isinstance(module, (SimpleModel, LinearWrapper))
 
-    model = SimpleModel(config.model_scale).to(device)
+    model = SimpleModel(config.model_scale, rank).to(device)
     model = FullyShardedDataParallel(
         model,
         device_id=device,
@@ -163,7 +164,9 @@ if __name__ == '__main__':
     )
 
     print("backend", args.backend)
-    if args.backend == 'nccl':
+    if args.backend == 'mpi':
+        dist.init_process_group(backend=args.backend)
+    elif args.backend == 'nccl':
         dist.init_process_group(backend="nccl", init_method="env://")
         local_rank = int(os.environ["LOCAL_RANK"])
         torch.cuda.set_device(local_rank)
@@ -171,12 +174,8 @@ if __name__ == '__main__':
         dist.init_process_group(backend="ucc", init_method="env://")
         local_rank = int(os.environ["LOCAL_RANK"])
         torch.cuda.set_device(local_rank)
-    elif args.backend == 'mpi':
-        dist.init_process_group(backend=args.backend)
     elif args.backend == 'gloo':
-        rank = int(os.environ["RANK"])
-        world_size = int(os.environ["WORLD_SIZE"])
-        dist.init_process_group(backend="gloo", rank=rank, world_size=world_size)
+        dist.init_process_group(backend="gloo", init_method="env://")
 
     if args.debug:
         import time; time.sleep(20)
