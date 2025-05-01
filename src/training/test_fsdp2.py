@@ -17,10 +17,6 @@ class LinearWrapper1(LinearWrapper):
     ...
 class LinearWrapper2(LinearWrapper):
     ...
-class LinearWrapper3(LinearWrapper):
-    ...
-class LinearWrapper4(LinearWrapper):
-    ...
 
 
 class SimpleModel(nn.Module):
@@ -28,9 +24,7 @@ class SimpleModel(nn.Module):
         super(SimpleModel, self).__init__()
         self.sequential0 = LinearWrapper0(512, 1024 * scale)
         self.sequential1 = LinearWrapper1(1024 * scale, 1024 * scale)
-        self.sequential2 = LinearWrapper2(1024 * scale, 1024 * scale)
-        self.sequential3 = LinearWrapper3(1024 * scale, 1024 * scale)
-        self.sequential4 = LinearWrapper4(1024 * scale, 512 * scale)
+        self.sequential2 = LinearWrapper2(1024 * scale, 512 * scale)
         self.last = nn.Linear(512 * scale, 10)
 
         # Register forward/backward hooks for all sequential layers
@@ -45,39 +39,22 @@ class SimpleModel(nn.Module):
         self.sequential0.register_forward_hook(forward_hook)
         self.sequential1.register_forward_hook(forward_hook)
         self.sequential2.register_forward_hook(forward_hook)
-        self.sequential3.register_forward_hook(forward_hook)
-        self.sequential4.register_forward_hook(forward_hook)
         self.last.register_forward_hook(forward_hook)
 
         self.sequential0.register_full_backward_hook(backward_hook)
         self.sequential1.register_full_backward_hook(backward_hook)
         self.sequential2.register_full_backward_hook(backward_hook)
-        self.sequential3.register_full_backward_hook(backward_hook)
-        self.sequential4.register_full_backward_hook(backward_hook)
         self.last.register_full_backward_hook(backward_hook)
 
     def forward(self, x):
         x = torch.relu(self.sequential0(x))
         x = torch.relu(self.sequential1(x))
         x = torch.relu(self.sequential2(x))
-        x = torch.relu(self.sequential3(x))
-        x = torch.relu(self.sequential4(x))
         return self.last(x)
 
 
-# def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
-#     if sharding_strategy == 'FULL_SHARD':
-#         return ShardingStrategy.FULL_SHARD
-#     elif sharding_strategy == 'HYBRID_SHARD':
-#         return ShardingStrategy.HYBRID_SHARD
-#     elif sharding_strategy == 'SHARD_GRAD_OP':
-#         return ShardingStrategy.SHARD_GRAD_OP
-#     else:
-#         raise ValueError(f"Invalid sharding strategy: {sharding_strategy}")
-
 @dataclasses.dataclass
 class Config:
-    # sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     model_scale: int = 1
     num_epochs: int = 5
 
@@ -87,13 +64,13 @@ def fsdp_training(config: Config, local_rank: int):
     device = torch.device('cuda', local_rank)
     print(f"Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs}")
 
-    def my_auto_wrap_policy(module: nn.Module, recurse: bool, nonwrapped_numel: int):
-        return isinstance(module, (SimpleModel, LinearWrapper))
-
     model = SimpleModel(config.model_scale, rank).to(device)
-    model = fully_shard(
+    # for module in model.modules():
+    #     fully_shard(module)
+    fully_shard(
         model,
-    ).to(device)
+    )
+    model.to_empty(device="cuda")
 
     gpu_name = torch.cuda.get_device_name(local_rank)
     print(f"Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; GPU: {gpu_name}")
@@ -153,7 +130,7 @@ if __name__ == '__main__':
 
     local_rank = int(os.getenv("LOCAL_RANK", 0))
     if args.backend == 'mpi':
-        local_rank = int(os.getenv("OMPI_COMM_WORLD_RANK", 0)) # TODO: fix it
+        local_rank = int(os.getenv("OMPI_COMM_WORLD_RANK", 0))
     torch.cuda.set_device(local_rank)
 
     print("local_rank", local_rank, "backend", args.backend)
