@@ -27,6 +27,7 @@ run_test_fsdp_gloo:
 		torchrun --nproc-per-node 2 --master_addr="0.0.0.0" --master_port=23456 \
 		-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend gloo
 
+
 run_test_fsdp2_mpi:
 	$(PYTORCH_DEBUG_FLAGS) OMP_NUM_THREADS=1 \
 		mpirun -n 2 \

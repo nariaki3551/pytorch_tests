@@ -159,8 +159,7 @@ if __name__ == '__main__':
 
     print("backend", args.backend)
     if args.backend == 'mpi':
-        dist.init_process_group(backend="mpi")
-        local_rank = 0 # TODO: fix it
+        dist.init_process_group(backend=args.backend)
     elif args.backend == 'nccl':
         dist.init_process_group(backend="nccl", init_method="env://")
     elif args.backend == 'ucc':
