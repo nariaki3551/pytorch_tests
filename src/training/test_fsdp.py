@@ -88,7 +88,7 @@ def fsdp_training(config: Config, local_rank: int):
     print(f"Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs}")
 
     def my_auto_wrap_policy(module: nn.Module, recurse: bool, nonwrapped_numel: int):
-        return isinstance(module, (SimpleModel, LinearWrapper))
+        return isinstance(module, (SimpleModel, nn.Linear))
 
     model = SimpleModel(config.model_scale, rank).to(device)
     model = FullyShardedDataParallel(
@@ -96,6 +96,7 @@ def fsdp_training(config: Config, local_rank: int):
         device_id=device,
         sharding_strategy=config.sharding_strategy,
         auto_wrap_policy=my_auto_wrap_policy,
+        forward_prefetch=True,
         limit_all_gathers=False,
     ).to(device)
 
@@ -170,6 +171,8 @@ if __name__ == '__main__':
             exit(0)
     elif args.backend == 'gloo':
         dist.init_process_group(backend="gloo", init_method="env://")
+
+    torch.cuda.set_device(local_rank)
 
     if args.debug:
         import time; time.sleep(20)
