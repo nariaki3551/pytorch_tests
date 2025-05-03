@@ -1,12 +1,21 @@
+USE_CUDA ?= 1
 SHARP_VERBOSE ?= 0
+
 CXX = mpicxx
 INCLUDE_DIRS = -I/usr/local/cuda/include
 CXX_FLAGS = -g -O0
-LIB_DIRS = -L/usr/local/cuda/lib64
-LIBS = -lcudart -lmpi
+LIB_DIRS =
+LIBS = -lmpi
+ifeq ($(USE_CUDA), 1)
+	LIB_DIRS = -L/usr/local/cuda/lib64
+	LIBS = -lcudart -lmpi
+endif
 BIN_DIR = ../../bin
 
-SRCS = check_cuda_support.cpp test_allgather.cpp test_allgather_cuda.cpp test_reducescatter.cpp test_reducescatter_cuda.cpp
+SRCS = test_allgather.cpp test_reducescatter.cpp
+ifeq ($(USE_CUDA), 1)
+	SRCS += check_cuda_support.cpp test_allgather_cuda.cpp test_reducescatter_cuda.cpp
+endif
 
 BINS = $(SRCS:.cpp=)
 TARGETS = $(addprefix $(BIN_DIR)/, $(addsuffix _mpi, $(BINS)))

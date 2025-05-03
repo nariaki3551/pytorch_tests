@@ -1,12 +1,15 @@
+USE_CUDA ?= 1
+USE_SHARP ?= 1
+
 .PHONY: run_test_allgather run_test_fsdp run_cuda_support_check_mpi run_check_ucc_sharp_support
 
 all: build_mpi build_ucc
 
 build_mpi:
-	$(MAKE) -C ./src/mpi
+	$(MAKE) -C ./src/mpi USE_CUDA=$(USE_CUDA)
 
 build_ucc:
-	$(MAKE) -C ./src/ucc
+	$(MAKE) -C ./src/ucc USE_SHARP=$(USE_SHARP)
 
 run_test_allgather:
 	$(MAKE) -C ./src/collective run_all

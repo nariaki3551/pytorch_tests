@@ -1,10 +1,15 @@
+USE_SHARP ?= 1
+
 CC = mpicc
 CFLAGS = -I/usr/local/cuda/include -g -O0
 LIB_DIRS = -L/usr/local/cuda/lib64
 LIBS = -lcudart -lmpi -lucc
 BIN_DIR = ../../bin
 
-SRCS_C = check_sharp_support.c
+SRCS_C =
+ifeq ($(USE_SHARP), 1)
+	SRCS_C += check_sharp_support.c
+endif
 
 BINS = $(SRCS_C:.c=)
 TARGETS = $(addprefix $(BIN_DIR)/, $(addsuffix _ucc, $(BINS)))
