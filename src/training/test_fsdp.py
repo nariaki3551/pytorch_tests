@@ -2,6 +2,7 @@ import os
 import time
 import argparse
 import dataclasses
+import functools
 
 import torch
 from torch import nn
@@ -9,60 +10,39 @@ import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel, ShardingStrategy
 import torch.optim as optim
 
-class LinearWrapper(nn.Linear):
-    ...
-class LinearWrapper0(LinearWrapper):
-    ...
-class LinearWrapper1(LinearWrapper):
-    ...
-class LinearWrapper2(LinearWrapper):
-    ...
-class LinearWrapper3(LinearWrapper):
-    ...
-class LinearWrapper4(LinearWrapper):
-    ...
-
 
 class SimpleModel(nn.Module):
     def __init__(self, scale: int, rank: int):
         super(SimpleModel, self).__init__()
-        self.sequential0 = LinearWrapper0(512, 1024 * scale)
-        self.sequential1 = LinearWrapper1(1024 * scale, 1024 * scale)
-        self.sequential2 = LinearWrapper2(1024 * scale, 1024 * scale)
-        self.sequential3 = LinearWrapper3(1024 * scale, 1024 * scale)
-        self.sequential4 = LinearWrapper4(1024 * scale, 512 * scale)
-        self.last = nn.Linear(512 * scale, 10)
+        self.sequential0 = nn.Linear(512, 1024 * scale)
+        self.sequential1 = nn.Linear(1024 * scale, 1024 * scale)
+        self.sequential2 = nn.Linear(1024 * scale, 1024 * scale)
+        self.sequential3 = nn.Linear(1024 * scale, 512 * scale)
+        self.sequential4 = nn.Linear(512 * scale, 10)
+      
+        def register_hooks(module, module_name):
+            def forward_hook(module, input, output):
+                print(f"[rank{rank}] Forward pass - {module_name}")
+                return output
+            def backward_hook(module, grad_input, grad_output):
+                print(f"[rank{rank}] Backward pass - {module_name}")
+                return grad_input
+            module.register_forward_hook(forward_hook)
+            module.register_full_backward_hook(backward_hook)
+        
+        register_hooks(self.sequential0, "Linear0")
+        register_hooks(self.sequential1, "Linear1")
+        register_hooks(self.sequential2, "Linear2")
+        register_hooks(self.sequential3, "Linear3")
+        register_hooks(self.sequential4, "Linear4")
 
-        # Register forward/backward hooks for all sequential layers
-        def forward_hook(module, input, output):
-            print(f"[rank{rank}] Forward pass - {module.__class__.__name__}")
-            return output
-
-        def backward_hook(module, grad_input, grad_output):
-            print(f"[rank{rank}] Backward pass - {module.__class__.__name__}")
-            return grad_input
-
-        self.sequential0.register_forward_hook(forward_hook)
-        self.sequential1.register_forward_hook(forward_hook)
-        self.sequential2.register_forward_hook(forward_hook)
-        self.sequential3.register_forward_hook(forward_hook)
-        self.sequential4.register_forward_hook(forward_hook)
-        self.last.register_forward_hook(forward_hook)
-
-        self.sequential0.register_full_backward_hook(backward_hook)
-        self.sequential1.register_full_backward_hook(backward_hook)
-        self.sequential2.register_full_backward_hook(backward_hook)
-        self.sequential3.register_full_backward_hook(backward_hook)
-        self.sequential4.register_full_backward_hook(backward_hook)
-        self.last.register_full_backward_hook(backward_hook)
 
     def forward(self, x):
         x = torch.relu(self.sequential0(x))
         x = torch.relu(self.sequential1(x))
         x = torch.relu(self.sequential2(x))
         x = torch.relu(self.sequential3(x))
-        x = torch.relu(self.sequential4(x))
-        return self.last(x)
+        return self.sequential4(x)
 
 
 def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
@@ -80,11 +60,17 @@ class Config:
     sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     model_scale: int = 1
     num_epochs: int = 5
+    device: str = 'cuda'
 
 def fsdp_training(config: Config, local_rank: int):
     rank = dist.get_rank()
     world_size = dist.get_world_size()
-    device = torch.device('cuda', local_rank)
+    if config.device == 'cuda':
+        torch.cuda.set_device(local_rank)
+        device = torch.device('cuda', local_rank)
+    else:
+        device = torch.device('cpu')
+
     print(f"Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs}")
 
     def my_auto_wrap_policy(module: nn.Module, recurse: bool, nonwrapped_numel: int):
@@ -100,8 +86,8 @@ def fsdp_training(config: Config, local_rank: int):
         limit_all_gathers=False,
     ).to(device)
 
-    gpu_name = torch.cuda.get_device_name(local_rank)
-    print(f"Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; GPU: {gpu_name}")
+    device_name = torch.cuda.get_device_name(local_rank) if config.device == 'cuda' else 'CPU'
+    print(f"Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; device: {device_name}")
 
     if rank == 0:
         print(model)
@@ -133,10 +119,6 @@ if __name__ == '__main__':
         help='Sharding strategy to use for training'
     )
     parser.add_argument(
-        '--debug', action='store_true',
-        help='Debug mode to use for training'
-    )
-    parser.add_argument(
         '--backend', type=str, choices=['mpi', 'nccl', 'ucc', 'gloo'], default='mpi',
         help='Backend to use for training'
     )
@@ -148,17 +130,21 @@ if __name__ == '__main__':
         "--num_epochs", type=int, default=5,
         help='Number of epochs to use for training'
     )
+    parser.add_argument(
+        "--device", type=str, default='cuda', choices=['cuda', 'cpu'],
+        help='Device to use for training'
+    )
     args = parser.parse_args()
 
     config = Config(
         sharding_strategy=get_sharding_strategy(args.sharding_strategy),
         model_scale=args.model_scale,
         num_epochs=args.num_epochs,
+        device=args.device,
     )
 
     local_rank = int(os.getenv("LOCAL_RANK", 0))
 
-    print("backend", args.backend)
     if args.backend == 'mpi':
         dist.init_process_group(backend=args.backend)
     elif args.backend == 'nccl':
@@ -171,11 +157,7 @@ if __name__ == '__main__':
             exit(0)
     elif args.backend == 'gloo':
         dist.init_process_group(backend="gloo", init_method="env://")
-
-    torch.cuda.set_device(local_rank)
-
-    if args.debug:
-        import time; time.sleep(20)
+    print(f"[rank{dist.get_rank()}] backend", args.backend)
 
     fsdp_training(config, local_rank)
     
