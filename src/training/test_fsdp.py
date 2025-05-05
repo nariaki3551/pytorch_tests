@@ -61,6 +61,7 @@ class Config:
     model_scale: int = 1
     num_epochs: int = 5
     device: str = 'cuda'
+    profile: bool = False
 
 def fsdp_training(config: Config, local_rank: int):
     rank = dist.get_rank()
@@ -96,6 +97,16 @@ def fsdp_training(config: Config, local_rank: int):
     input_data = torch.randn(2, 512).to(device)
     target = torch.randint(0, 10, (2,)).to(device)
 
+    # profiler setting
+    if config.profile:
+        prof = torch.profiler.profile(
+            activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
+            with_stack=True
+        )
+        prof.start()
+    else:
+        prof = None
+
     print(f"Rank {rank}/{world_size}: Start training")
     model.train()
     for epoch in range(config.num_epochs):
@@ -106,11 +117,16 @@ def fsdp_training(config: Config, local_rank: int):
         start = time.time()
         loss.backward()
         end = time.time()
-
         optimizer.step()
+
         if rank == 0:
             print(f"EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.3f} seconds")
             print(f"EXP: Rank {rank}/{world_size} Epoch {epoch} loss: {loss.item():.6f}")
+
+    if prof is not None:
+        prof.stop()
+        if rank == 0:
+            print(prof.key_averages().table(sort_by="self_cpu_time_total", row_limit=10))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='FSDP Training')
@@ -134,6 +150,10 @@ if __name__ == '__main__':
         "--device", type=str, default='cuda', choices=['cuda', 'cpu'],
         help='Device to use for training'
     )
+    parser.add_argument(
+        "--profile", action='store_true',
+        help='Whether to profile the training'
+    )
     args = parser.parse_args()
 
     config = Config(
@@ -141,6 +161,7 @@ if __name__ == '__main__':
         model_scale=args.model_scale,
         num_epochs=args.num_epochs,
         device=args.device,
+        profile=args.profile,
     )
 
     local_rank = int(os.getenv("LOCAL_RANK", 0))
