@@ -120,8 +120,7 @@ def fsdp_training(config: Config, local_rank: int):
         optimizer.step()
 
         if rank == 0:
-            print(f"EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.3f} seconds")
-            print(f"EXP: Rank {rank}/{world_size} Epoch {epoch} loss: {loss.item():.6f}")
+            print(f"EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.3f} seconds, loss: {loss.item():.6f}")
 
     if prof is not None:
         prof.stop()
@@ -154,6 +153,10 @@ if __name__ == '__main__':
         "--profile", action='store_true',
         help='Whether to profile the training'
     )
+    parser.add_argument(
+        "--device_id", type=int, default=0,
+        help='Device ID to use for training'
+    )
     args = parser.parse_args()
 
     config = Config(
@@ -164,8 +167,9 @@ if __name__ == '__main__':
         profile=args.profile,
     )
 
-    local_rank = int(os.getenv("LOCAL_RANK", 0))
-
+    # local_rank = int(os.getenv("LOCAL_RANK", 0))
+    local_rank = args.device_id
+    print("backend", args.backend)
     if args.backend == 'mpi':
         dist.init_process_group(backend=args.backend)
     elif args.backend == 'nccl':
