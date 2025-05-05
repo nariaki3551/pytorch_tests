@@ -61,14 +61,15 @@ class Config:
     model_scale: int = 1
     num_epochs: int = 5
     device: str = 'cuda'
+    device_id: int = 0
     profile: bool = False
 
-def fsdp_training(config: Config, local_rank: int):
+def fsdp_training(config: Config):
     rank = dist.get_rank()
     world_size = dist.get_world_size()
     if config.device == 'cuda':
-        torch.cuda.set_device(local_rank)
-        device = torch.device('cuda', local_rank)
+        torch.cuda.set_device(config.device_id)
+        device = torch.device('cuda', config.device_id)
     else:
         device = torch.device('cpu')
 
@@ -80,14 +81,14 @@ def fsdp_training(config: Config, local_rank: int):
     model = SimpleModel(config.model_scale, rank).to(device)
     model = FullyShardedDataParallel(
         model,
-        device_id=device,
+        device_id=config.device_id,
         sharding_strategy=config.sharding_strategy,
         auto_wrap_policy=my_auto_wrap_policy,
         forward_prefetch=True,
         limit_all_gathers=False,
     ).to(device)
 
-    device_name = torch.cuda.get_device_name(local_rank) if config.device == 'cuda' else 'CPU'
+    device_name = torch.cuda.get_device_name(config.device_id) if config.device == 'cuda' else 'CPU'
     print(f"Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; device: {device_name}")
 
     if rank == 0:
@@ -100,7 +101,9 @@ def fsdp_training(config: Config, local_rank: int):
     # profiler setting
     if config.profile:
         prof = torch.profiler.profile(
-            activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA],
             with_stack=True
         )
         prof.start()
@@ -125,7 +128,7 @@ def fsdp_training(config: Config, local_rank: int):
     if prof is not None:
         prof.stop()
         if rank == 0:
-            print(prof.key_averages().table(sort_by="self_cpu_time_total", row_limit=10))
+            print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=30))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='FSDP Training')
@@ -167,9 +170,6 @@ if __name__ == '__main__':
         profile=args.profile,
     )
 
-    # local_rank = int(os.getenv("LOCAL_RANK", 0))
-    local_rank = args.device_id
-    print("backend", args.backend)
     if args.backend == 'mpi':
         dist.init_process_group(backend=args.backend)
     elif args.backend == 'nccl':
@@ -182,9 +182,9 @@ if __name__ == '__main__':
             exit(0)
     elif args.backend == 'gloo':
         dist.init_process_group(backend="gloo", init_method="env://")
-    print(f"[rank{dist.get_rank()}] backend", args.backend)
+    print(f"[rank{dist.get_rank()}] backend: {args.backend}")
 
-    fsdp_training(config, local_rank)
+    fsdp_training(config)
     
     dist.destroy_process_group()
 
