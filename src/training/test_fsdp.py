@@ -22,19 +22,19 @@ class SimpleModel(nn.Module):
       
         def register_hooks(module, module_name):
             def forward_hook(module, input, output):
-                print(f"[rank{rank}] Forward pass - {module_name}")
+                print(f'[rank{rank}] Forward pass - {module_name}')
                 return output
             def backward_hook(module, grad_input, grad_output):
-                print(f"[rank{rank}] Backward pass - {module_name}")
+                print(f'[rank{rank}] Backward pass - {module_name}')
                 return grad_input
             module.register_forward_hook(forward_hook)
             module.register_full_backward_hook(backward_hook)
         
-        register_hooks(self.sequential0, "Linear0")
-        register_hooks(self.sequential1, "Linear1")
-        register_hooks(self.sequential2, "Linear2")
-        register_hooks(self.sequential3, "Linear3")
-        register_hooks(self.sequential4, "Linear4")
+        # register_hooks(self.sequential0, "Linear0")
+        # register_hooks(self.sequential1, "Linear1")
+        # register_hooks(self.sequential2, "Linear2")
+        # register_hooks(self.sequential3, "Linear3")
+        # register_hooks(self.sequential4, "Linear4")
 
 
     def forward(self, x):
@@ -53,16 +53,17 @@ def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
     elif sharding_strategy == 'SHARD_GRAD_OP':
         return ShardingStrategy.SHARD_GRAD_OP
     else:
-        raise ValueError(f"Invalid sharding strategy: {sharding_strategy}")
+        raise ValueError(f'Invalid sharding strategy: {sharding_strategy}')
 
 @dataclasses.dataclass
 class Config:
     sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     model_scale: int = 1
+    batch_size: int = 32
     num_epochs: int = 5
     device: str = 'cuda'
     device_id: int = 0
-    profile: bool = False
+    profile: str = None
 
 def fsdp_training(config: Config):
     rank = dist.get_rank()
@@ -73,7 +74,7 @@ def fsdp_training(config: Config):
     else:
         device = torch.device('cpu')
 
-    print(f"Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs}")
+    print(f'Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs} and profile {config.profile}')
 
     def my_auto_wrap_policy(module: nn.Module, recurse: bool, nonwrapped_numel: int):
         return isinstance(module, (SimpleModel, nn.Linear))
@@ -89,46 +90,64 @@ def fsdp_training(config: Config):
     ).to(device)
 
     device_name = torch.cuda.get_device_name(config.device_id) if config.device == 'cuda' else 'CPU'
-    print(f"Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; device: {device_name}")
+    print(f'Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; device: {device_name}')
 
     if rank == 0:
         print(model)
 
     optimizer = optim.AdamW(model.parameters(), lr=0.01)
-    input_data = torch.randn(2, 512).to(device)
-    target = torch.randint(0, 10, (2,)).to(device)
+    input_data = torch.randn(config.batch_size, 512).to(device)
+    target = torch.randint(0, 10, (config.batch_size,)).to(device)
 
     # profiler setting
-    if config.profile:
+    if config.profile is not None:
         prof = torch.profiler.profile(
             activities=[
                 torch.profiler.ProfilerActivity.CPU,
                 torch.profiler.ProfilerActivity.CUDA],
-            with_stack=True
+            with_stack=True,
+            with_flops=True,
         )
-        prof.start()
-    else:
-        prof = None
 
-    print(f"Rank {rank}/{world_size}: Start training")
+    print(f'Rank {rank}/{world_size}: Start training')
     model.train()
+
+    if config.profile == 'all':
+        prof.start()
+
     for epoch in range(config.num_epochs):
         optimizer.zero_grad()
+
+        # forward
         output = model(input_data)
         loss = nn.CrossEntropyLoss()(output, target)
 
+        # backward
         start = time.time()
-        loss.backward()
+        if config.profile == 'backward':
+            prof.start()
+            loss.backward()
+            prof.stop()
+        else:
+            loss.backward()
         end = time.time()
         optimizer.step()
 
         if rank == 0:
-            print(f"EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.3f} seconds, loss: {loss.item():.6f}")
+            print(f'EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.3f} seconds, loss: {loss.item():.6f}')
 
-    if prof is not None:
+    if config.profile == 'all':
         prof.stop()
+
+    if config.profile is not None:
         if rank == 0:
-            print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=30))
+            prof_str = prof.key_averages().table(
+                sort_by='cpu_time_total',
+                row_limit=30,
+                max_name_column_width=75,
+            )
+            print(prof_str)
+            prof.export_chrome_trace(f'trace_{config.profile}.json')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='FSDP Training')
@@ -145,19 +164,23 @@ if __name__ == '__main__':
         help='Model scale to use for training'
     )
     parser.add_argument(
-        "--num_epochs", type=int, default=5,
+        '--batch_size', type=int, default=32,
+        help='Batch size to use for training'
+    )
+    parser.add_argument(
+        '--num_epochs', type=int, default=5,
         help='Number of epochs to use for training'
     )
     parser.add_argument(
-        "--device", type=str, default='cuda', choices=['cuda', 'cpu'],
+        '--device', type=str, default='cuda', choices=['cuda', 'cpu'],
         help='Device to use for training'
     )
     parser.add_argument(
-        "--profile", action='store_true',
+        '--profile', type=str, default=None, choices=['all', 'backward'],
         help='Whether to profile the training'
     )
     parser.add_argument(
-        "--device_id", type=int, default=0,
+        '--device_id', type=int, default=0,
         help='Device ID to use for training'
     )
     args = parser.parse_args()
@@ -165,24 +188,26 @@ if __name__ == '__main__':
     config = Config(
         sharding_strategy=get_sharding_strategy(args.sharding_strategy),
         model_scale=args.model_scale,
+        batch_size=args.batch_size,
         num_epochs=args.num_epochs,
         device=args.device,
+        device_id=args.device_id,
         profile=args.profile,
     )
 
     if args.backend == 'mpi':
         dist.init_process_group(backend=args.backend)
     elif args.backend == 'nccl':
-        dist.init_process_group(backend="nccl", init_method="env://")
+        dist.init_process_group(backend='nccl', init_method='env://')
     elif args.backend == 'ucc':
         try:
-            dist.init_process_group(backend="ucc", init_method="env://")
+            dist.init_process_group(backend='ucc', init_method='env://')
         except Exception as e:
             print(f"Error initializing UCC process group: {e}")
             exit(0)
     elif args.backend == 'gloo':
-        dist.init_process_group(backend="gloo", init_method="env://")
-    print(f"[rank{dist.get_rank()}] backend: {args.backend}")
+        dist.init_process_group(backend='gloo', init_method='env://')
+    print(f'[rank{dist.get_rank()}/{dist.get_world_size()}] backend: {args.backend}, device_id: {args.device_id}')
 
     fsdp_training(config)
     

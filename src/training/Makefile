@@ -5,8 +5,8 @@ ifeq ($(DEBUG), 1)
 	DEBUG_FLAGS := TORCH_CPP_LOG_LEVEL=INFO TORCH_DISTRIBUTED_DEBUG=DETAIL TORCH_SHOW_CPP_STACKTRACES=0
 endif
 PROFILE_FLAGS =
-ifeq ($(PROFILE), 1)
-	PROFILE_FLAGS += --profile
+ifneq ($(PROFILE), 0)
+	PROFILE_FLAGS += --profile $(PROFILE)
 endif
 
 run_fsdp_all: run_test_fsdp_mpi run_test_fsdp_nccl run_test_fsdp_ucc run_test_fsdp_gloo
@@ -23,30 +23,21 @@ TEST_FSDP_ARGS = --model_scale $(MODEL_SCALE) --num_epochs $(NUM_EPOCHS) --backe
 run_test_fsdp_mpi_multinode:
 	$(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
 		mpirun \
-		  -n 1 --host snail21:1 --mca plm_rsh_args "-p 2222" \
-			--mca orte_keep_fqdn_hostnames true \
-			--mca btl_tcp_if_include eno1 \
+		  -n 1 --host snail01:1 --mca plm_rsh_args "-p 2222" \
+			-x CUDA_VISIBLE_DEVICES=3,2,1,0 \
+			--mca btl_openib_if_include mlx5_1:1 \
+			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
 			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
-		: -n 1 --host snail21:1 --mca plm_rsh_args "-p 2222" \
-			--mca orte_keep_fqdn_hostnames true \
-			--mca btl_tcp_if_include eno1 \
-			-- python3 test_fsdp.py --device_id 1 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
-		: -n 1 --host snail24:1 --mca plm_rsh_args "-p 2222" \
-			--mca orte_keep_fqdn_hostnames true \
-			--mca btl_tcp_if_include eno1 \
+		: -n 1 --host snail02:1 --mca plm_rsh_args "-p 2222" \
+			-x CUDA_VISIBLE_DEVICES=1,0 \
+			--mca btl_openib_if_include mlx5_2:1 \
+			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
 			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
-		: -n 1 --host snail24:1 --mca plm_rsh_args "-p 2222" \
-			--mca orte_keep_fqdn_hostnames true \
-			--mca btl_tcp_if_include eno1 \
-			-- python3 test_fsdp.py --device_id 1 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
-		: -n 1 --host snail24:1 --mca plm_rsh_args "-p 2222" \
-			--mca orte_keep_fqdn_hostnames true \
-			--mca btl_tcp_if_include eno1 \
-			-- python3 test_fsdp.py --device_id 2 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
-		: -n 1 --host snail24:1 --mca plm_rsh_args "-p 2222" \
-			--mca orte_keep_fqdn_hostnames true \
-			--mca btl_tcp_if_include eno1 \
-			-- python3 test_fsdp.py --device_id 3 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
+		: -n 1 --host snail03:1 --mca plm_rsh_args "-p 2222" \
+			-x CUDA_VISIBLE_DEVICES=1,0 \
+			--mca btl_openib_if_include mlx5_2:1 \
+			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+			-- python3 test_fsdp.py --device_id 1 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
 
 run_test_fsdp_mpi_multinode_hello:
 	$(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
