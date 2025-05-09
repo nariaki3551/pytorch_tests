@@ -25,3 +25,7 @@ run_test_sharp_mpi: build_mpi
 
 run_test_ucc: build_ucc
 	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc
+
+clean:
+	$(MAKE) -C ./src/mpi clean
+	$(MAKE) -C ./src/ucc clean
