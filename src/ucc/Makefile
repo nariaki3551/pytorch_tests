@@ -1,3 +1,4 @@
+USE_CUDA ?= 1
 USE_SHARP ?= 1
 
 CC = mpicc
@@ -8,7 +9,9 @@ BIN_DIR = ../../bin
 
 SRCS_C =
 ifeq ($(USE_SHARP), 1)
+ifeq ($(USE_CUDA), 1)
 	SRCS_C += check_sharp_support.c
+endif
 endif
 
 BINS = $(SRCS_C:.c=)

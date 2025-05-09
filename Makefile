@@ -11,7 +11,7 @@ build_mpi:
 
 build_ucc:
 ifeq ($(USE_UCC), 1)
-	$(MAKE) -C ./src/ucc USE_SHARP=$(USE_SHARP)
+	$(MAKE) -C ./src/ucc USE_SHARP=$(USE_SHARP) USE_CUDA=$(USE_CUDA)
 endif
 
 run_test_allgather:
