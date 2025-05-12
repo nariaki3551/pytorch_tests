@@ -39,6 +39,37 @@ run_test_fsdp_mpi_multinode:
 			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
 			-- python3 test_fsdp.py --device_id 1 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
 
+run_test_fsdp_mpi_multinode_sharp:
+	mpirun \
+		-n 1 \
+		--host snail01:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=sharp,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=3 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
+		--mca btl_openib_if_include mlx5_1:1 \
+		-x UCC_TL_SHARP_DEVICES=mlx5_1 \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
+		-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
+		: \
+		-n 1 \
+		--host snail02:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=sharp,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=1 \
+		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
+		--mca btl_openib_if_include mlx5_2:1 \
+		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
+		-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
+
+
 run_test_fsdp_mpi_multinode_hello:
 	$(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
 		mpirun \
