@@ -49,18 +49,34 @@ run_test_reducescatter_mpi: $(BIN_DIR)/test_reducescatter_mpi
 	mpirun -n 2 $<
 
 run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
-	mpirun -n 2 --host snail02:1,snail03:1 \
-	    --mca plm_rsh_args "-p 2222" \
+	mpirun \
+		-n 1 \
+		--host snail01:1 \
+		--mca plm_rsh_args "-p 2222" \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
-		-x UCC_CL_BASIC_TLS=spin,ucp,sharp \
-		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf \
+		-x UCC_CL_BASIC_TLS=sharp,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
 		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
-		-x CUDA_VISIBLE_DEVICES=1,0 \
-		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 \
+		-x CUDA_VISIBLE_DEVICES=3 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
+		--mca btl_openib_if_include mlx5_1:1 \
+		-x UCC_TL_SHARP_DEVICES=mlx5_1 \
+		$(SHARP_VERBOSE_OPTS) \
+		-- $< \
+		: \
+		-n 1 \
+		--host snail02:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=sharp,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=1 \
+		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
 		--mca btl_openib_if_include mlx5_2:1 \
 		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
 		$(SHARP_VERBOSE_OPTS) \
-		$<
+		-- $<
 
 run_test_reducescatter_cuda_mpi: $(BIN_DIR)/test_reducescatter_cuda_mpi
 	mpirun -n 2 $<
