@@ -1,5 +1,6 @@
 USE_CUDA ?= 1
 SHARP_VERBOSE ?= 0
+SPIN_VERBOSE ?= 0
 
 CXX = mpicxx
 INCLUDE_DIRS = -I/usr/local/cuda/include
@@ -31,9 +32,15 @@ run_test: run_cuda_support_check_mpi run_test_allgather_mpi run_test_allgather_c
 run_sharp_test: run_test_reducescatter_sharp_mpi
 
 ifeq ($(SHARP_VERBOSE), 1)
-SHARP_VERBOSE_OPTS = --mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3
+SHARP_VERBOSE_OPTS = --mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3
 else
 SHARP_VERBOSE_OPTS =
+endif
+
+ifeq ($(SPIN_VERBOSE), 1)
+SPIN_VERBOSE_OPTS = --mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCC_TL_SPIN_VERBOSE=3
+else
+SPIN_VERBOSE_OPTS =
 endif
 
 run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
@@ -41,6 +48,70 @@ run_cuda_support_check_mpi: $(BIN_DIR)/check_cuda_support_mpi
 
 run_test_allgather_mpi: $(BIN_DIR)/test_allgather_mpi
 	mpirun -n 2 $<
+
+run_test_allgather_spin_mpi: $(BIN_DIR)/test_allgather_mpi
+	mpirun \
+		-n 1 \
+		--host snail01:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=3 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_1:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		$(SPIN_VERBOSE_OPTS) \
+		-- $< \
+		: \
+		-n 1 \
+		--host snail02:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=1 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_2:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		$(SPIN_VERBOSE_OPTS) \
+		-- $<
+
+run_test_allgather_spin_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
+	mpirun \
+		-n 1 \
+		--host snail01:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=3 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_1:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		$(SPIN_VERBOSE_OPTS) \
+		-- $< \
+		: \
+		-n 1 \
+		--host snail02:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=1 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_2:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		$(SPIN_VERBOSE_OPTS) \
+		-- $<
 
 run_test_allgather_cuda_mpi: $(BIN_DIR)/test_allgather_cuda_mpi
 	mpirun -n 2 $<
@@ -58,9 +129,8 @@ run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
 		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
 		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
 		-x CUDA_VISIBLE_DEVICES=3 \
-		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
-		--mca btl_openib_if_include mlx5_1:1 \
 		-x UCC_TL_SHARP_DEVICES=mlx5_1 \
+		--mca btl_openib_if_include mlx5_1:1 \
 		$(SHARP_VERBOSE_OPTS) \
 		-- $< \
 		: \
@@ -74,7 +144,6 @@ run_test_reducescatter_sharp_mpi: $(BIN_DIR)/test_reducescatter_mpi
 		-x CUDA_VISIBLE_DEVICES=1 \
 		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
 		--mca btl_openib_if_include mlx5_2:1 \
-		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
 		$(SHARP_VERBOSE_OPTS) \
 		-- $<
 
