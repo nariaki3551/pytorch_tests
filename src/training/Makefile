@@ -19,7 +19,7 @@ run_test_fsdp_mpi:
 
 NUM_EPOCHS := 3
 MODEL_SCALE := 1
-TEST_FSDP_ARGS = --model_scale $(MODEL_SCALE) --num_epochs $(NUM_EPOCHS) --backend mpi --device cuda
+TEST_FSDP_ARGS = --model_scale $(MODEL_SCALE) --num_epochs $(NUM_EPOCHS) --backend nccl --device cuda
 run_test_fsdp_mpi_multinode:
 	$(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
 		mpirun \
@@ -52,6 +52,12 @@ run_test_fsdp_mpi_multinode_sharp:
 		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
 		--mca btl_openib_if_include mlx5_1:1 \
 		-x UCC_TL_SHARP_DEVICES=mlx5_1 \
+		-x RANK=0 \
+		-x WORLD_SIZE=2 \
+		-x MASTER_ADDR=snail01 \
+		-x MASTER_PORT=12345 \
+		-x NCCL_COLLNET_ENABLE=1 \
+		-x NCCL_SHARP_GROUP_SIZE_THRESH=1 \
 		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
 		-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
 		: \
@@ -66,6 +72,12 @@ run_test_fsdp_mpi_multinode_sharp:
 		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
 		--mca btl_openib_if_include mlx5_2:1 \
 		-x UCC_TL_SHARP_DEVICES=mlx5_2 \
+		-x RANK=1 \
+		-x WORLD_SIZE=2 \
+		-x MASTER_ADDR=snail01 \
+		-x MASTER_PORT=12345 \
+		-x NCCL_COLLNET_ENABLE=1 \
+		-x NCCL_SHARP_GROUP_SIZE_THRESH=1 \
 		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
 		-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
 
@@ -75,7 +87,42 @@ run_test_fsdp_mpi_multinode_spin:
 		--host snail01:1 \
 		--mca plm_rsh_args "-p 2222" \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=sharp,spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=3 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_1:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCC_TL_SPIN_VERBOSE=3 \
+		-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
+		: \
+		-n 1 \
+		--host snail02:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=sharp,spin,ucp \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=1 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_2:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCC_TL_SPIN_VERBOSE=3 \
+		-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
+
+run_test_fsdp_mpi_multinode_sharp_spin:
+	mpirun \
+		-n 1 \
+		--host snail01:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
 		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
 		-x UCC_TL_SPIN_TUNE=allgather:inf \
 		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
 		-x CUDA_VISIBLE_DEVICES=3 \
@@ -91,6 +138,9 @@ run_test_fsdp_mpi_multinode_spin:
 		--mca plm_rsh_args "-p 2222" \
 		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
 		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
 		-x UCC_TL_SPIN_TUNE=allgather:inf \
 		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
 		-x CUDA_VISIBLE_DEVICES=1 \
@@ -113,9 +163,48 @@ run_test_fsdp_mpi_multinode_hello:
 
 
 run_test_fsdp_nccl:
-	$(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
-		torchrun --nproc-per-node 2 --master_addr="0.0.0.0" --master_port=23456 \
-		-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend nccl --device cuda
+	# $(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
+	# 	torchrun --nproc-per-node 2 --master_addr="0.0.0.0" --master_port=23456 \
+	# 	-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend nccl --device cuda
+	mpirun \
+		-n 1 \
+		--host snail01:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=3 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_1:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCC_TL_SPIN_VERBOSE=3 \
+	 	-- torchrun --nnodes 2 --nproc-per-node 1 --master_addr=snail01 --master_port=23456 \
+	 	-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend nccl --device cuda \
+		: \
+		-n 1 \
+		--host snail02:1 \
+		--mca plm_rsh_args "-p 2222" \
+		--mca coll_ucc_enable 1 --mca coll_ucc_priority 100 -x UCC_MIN_TEAM_SIZE=2 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		-x UCC_TL_SHARP_TUNE=reduce_scatter:inf#allreduce:inf#reduce_scatterv:inf \
+		-x SHARP_COLL_ENABLE_SAT=1 -x UCC_TL_SHARP_MIN_TEAM_SIZE=2 -x UCC_TL_SHARP_TEAM_MAX_PPN=2 \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCX_LOG_LEVEL=warning -x SHARP_COLL_LOG_LEVEL=5 -x UCC_TL_SHARP_VERBOSE=3 \
+		-x UCC_TL_SPIN_TUNE=allgather:inf \
+		-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 -x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
+		-x CUDA_VISIBLE_DEVICES=1 \
+		-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 \
+		-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+		--mca btl_openib_if_include mlx5_2:1 \
+		--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+		--mca coll_ucc_verbose 3 -x UCC_LOG_LEVEL=trace -x UCC_TL_LOG_LEVEL=trace -x UCC_TL_SPIN_VERBOSE=3 \
+	 	-- torchrun --nnodes 2 --nproc-per-node 1 --master_addr=snail01 --master_port=23456 \
+	 	-- test_fsdp.py --model_scale 1 --num_epochs 3 --backend nccl --device cuda
+
 
 run_test_fsdp_ucc:
 	$(DEBUG_FLAGS) OMP_NUM_THREADS=1 \
