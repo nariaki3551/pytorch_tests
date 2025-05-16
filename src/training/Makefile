@@ -41,6 +41,7 @@ UCC_COMMON_FLAGS = \
 	-x UCC_MIN_TEAM_SIZE=2
 VERBOSE_FLAGS = \
 	-x UCC_TL_SHARP_VERBOSE=3 \
+	-x UCC_TL_SPIN_VERBOSE=3 \
 	-x SHARP_COLL_LOG_LEVEL=5 \
 	-x UCC_LOG_LEVEL=trace \
 	-x UCC_TL_LOG_LEVEL=trace \
@@ -109,6 +110,7 @@ run_test_fsdp_mpi_multinode_spin:
 			-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
 			--mca btl_openib_if_include mlx5_1:1 \
 			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+			$(TORCH_DEBUG_FLAGS) \
 			$(UCC_COMMON_FLAGS) \
 			$(SPIN_COMMON_FLAGS) \
 			$(VERBOSE_FLAGS) \
@@ -122,6 +124,7 @@ run_test_fsdp_mpi_multinode_spin:
 			--mca btl_openib_if_include mlx5_2:1 \
 			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
 			-x RANK=1 -x WORLD_SIZE=2 -x MASTER_ADDR=snail01 -x MASTER_PORT=12345 \
+			$(TORCH_DEBUG_FLAGS) \
 			$(UCC_COMMON_FLAGS) \
 			$(SPIN_COMMON_FLAGS) \
 			$(VERBOSE_FLAGS) \
