@@ -89,7 +89,8 @@ run_test_fsdp_mpi_multinode_sharp:
 			$(UCC_COMMON_FLAGS) \
 			$(SHARP_COMMON_FLAGS) \
 			$(VERBOSE_FLAGS) \
-			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
+			-x PYTORCH_CUDA_ALLOC_CONF=roundup_power2_divisions:4 \
+			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) --profile all \
 		: -n 1 --host snail02:1 \
 			--mca plm_rsh_args "-p 2222" \
 			-x UCC_CL_BASIC_TLS=sharp,ucp \
@@ -99,6 +100,7 @@ run_test_fsdp_mpi_multinode_sharp:
 			$(UCC_COMMON_FLAGS) \
 			$(SHARP_COMMON_FLAGS) \
 			$(VERBOSE_FLAGS) \
+			-x PYTORCH_CUDA_ALLOC_CONF=roundup_power2_divisions:4 \
 			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
 
 run_test_fsdp_mpi_multinode_spin:
@@ -110,11 +112,11 @@ run_test_fsdp_mpi_multinode_spin:
 			-x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 \
 			--mca btl_openib_if_include mlx5_1:1 \
 			--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+			-x RANK=0 -x WORLD_SIZE=2 -x MASTER_ADDR=snail01 -x MASTER_PORT=12345 \
 			$(TORCH_DEBUG_FLAGS) \
 			$(UCC_COMMON_FLAGS) \
 			$(SPIN_COMMON_FLAGS) \
 			$(VERBOSE_FLAGS) \
-			-x RANK=0 -x WORLD_SIZE=2 -x MASTER_ADDR=snail01 -x MASTER_PORT=12345 \
 			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS) \
 		: -n 1 --host snail02:1 \
 			--mca plm_rsh_args "-p 2222" \

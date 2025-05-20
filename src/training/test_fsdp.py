@@ -30,11 +30,11 @@ class SimpleModel(nn.Module):
             module.register_forward_hook(forward_hook)
             module.register_full_backward_hook(backward_hook)
         
-        # register_hooks(self.sequential0, "Linear0")
-        # register_hooks(self.sequential1, "Linear1")
-        # register_hooks(self.sequential2, "Linear2")
-        # register_hooks(self.sequential3, "Linear3")
-        # register_hooks(self.sequential4, "Linear4")
+        register_hooks(self.sequential0, "Linear0")
+        register_hooks(self.sequential1, "Linear1")
+        register_hooks(self.sequential2, "Linear2")
+        register_hooks(self.sequential3, "Linear3")
+        register_hooks(self.sequential4, "Linear4")
 
 
     def forward(self, x):
@@ -104,9 +104,10 @@ def fsdp_training(config: Config):
         prof = torch.profiler.profile(
             activities=[
                 torch.profiler.ProfilerActivity.CPU,
-                torch.profiler.ProfilerActivity.CUDA],
+                torch.profiler.ProfilerActivity.CUDA,
+            ],
             with_stack=True,
-            with_flops=True,
+            with_flops=False,
         )
 
     print(f'Rank {rank}/{world_size}: Start training')
