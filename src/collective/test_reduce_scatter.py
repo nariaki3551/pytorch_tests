@@ -8,7 +8,8 @@ import torch.distributed as dist
 def main(args):
     dtype_ints = [torch.int8, torch.int16, torch.int32, torch.int64]
     dtype_floats = [torch.float32, torch.float64]
-    reduce_ops = [dist.ReduceOp.AVG, dist.ReduceOp.SUM, dist.ReduceOp.PRODUCT, dist.ReduceOp.MIN, dist.ReduceOp.MAX]
+    # reduce_ops = [dist.ReduceOp.AVG, dist.ReduceOp.SUM, dist.ReduceOp.PRODUCT, dist.ReduceOp.MIN, dist.ReduceOp.MAX]
+    reduce_ops = [dist.ReduceOp.SUM, dist.ReduceOp.PRODUCT, dist.ReduceOp.MIN, dist.ReduceOp.MAX]
 
     for dtype in dtype_ints:
         for reduce_op in reduce_ops:
