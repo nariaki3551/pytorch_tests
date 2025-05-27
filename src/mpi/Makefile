@@ -90,7 +90,7 @@ run_test_allgather_multinode_ucp: $(BIN_DIR)/test_allgather_mpi
 		-x UCC_CL_BASIC_TLS=ucp \
 		$(SNAIL02_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $<
 
-run_test_allgather_multinode_cup_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
+run_test_allgather_multinode_ucp_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
 	mpirun \
 		-n 1 \
 		-x UCC_CL_BASIC_TLS=ucp \
@@ -100,15 +100,25 @@ run_test_allgather_multinode_cup_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
 		-x UCC_CL_BASIC_TLS=ucp \
 		$(SNAIL02_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $<
 
+run_test_allgather_multinode_spin: $(BIN_DIR)/test_allgather_mpi
+	mpirun \
+		-n 1 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		$(SNAIL01_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(SPIN_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $< --count 64 \
+		: \
+		-n 1 \
+		-x UCC_CL_BASIC_TLS=spin,ucp \
+		$(SNAIL02_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(SPIN_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $< --count 64
+
 run_test_allgather_multinode_spin_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
 	mpirun \
 		-n 1 \
 		-x UCC_CL_BASIC_TLS=spin,ucp \
-		$(SNAIL01_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(SPIN_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $< \
+		$(SNAIL01_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(SPIN_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $< --count 64\
 		: \
 		-n 1 \
 		-x UCC_CL_BASIC_TLS=spin,ucp \
-		$(SNAIL02_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(SPIN_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $<
+		$(SNAIL02_V100_1_FLAGS) $(UCC_COMMON_FLAGS) $(SPIN_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) -- $< --count 64
 
 run_test_reducescatter: $(BIN_DIR)/test_reducescatter_mpi
 	mpirun -n 2 $<

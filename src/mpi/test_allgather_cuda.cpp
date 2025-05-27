@@ -79,11 +79,8 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &ctx.rank);
     MPI_Comm_size(MPI_COMM_WORLD, &ctx.size);
 
-    // Using cudaMalloc, we get the following error, so use cudaMallocHost
-    //     ERROR ibv_reg_mr(addr:0x7f785ba00000 size:8192) failed: Bad address)
-    //     tl_sharp_coll.c:111  TL_SHARP ERROR ucc_rcache_get failed
-    cudaMallocHost((void**)&ctx.send_buff, ctx.count * sizeof(int));
-    cudaMallocHost((void**)&ctx.recv_buff, ctx.count * ctx.size * sizeof(int));
+    cudaMalloc((void**)&ctx.send_buff, ctx.count * sizeof(int));
+    cudaMalloc((void**)&ctx.recv_buff, ctx.count * ctx.size * sizeof(int));
 
     int* host_buff = (int*)malloc(ctx.count * ctx.size * sizeof(int));
     for (int i = 0; i < ctx.count; ++i) {

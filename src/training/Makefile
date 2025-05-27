@@ -91,7 +91,6 @@ run_test_fsdp_mpi_multinode_sharp:
 			-x RANK=1 -x WORLD_SIZE=2 -x MASTER_ADDR=snail01 -x MASTER_PORT=12345 \
 			$(UCC_COMMON_FLAGS) $(SHARP_COMMON_FLAGS) $(VERBOSE_FLAGS) $(TORCH_DEBUG_FLAGS) \
 			-- python3 test_fsdp.py --device_id 0 $(TEST_FSDP_ARGS) $(PROFILE_FLAGS)
-			# -x PYTORCH_CUDA_ALLOC_CONF=roundup_power2_divisions:4 \
 
 run_test_fsdp_mpi_multinode_spin:
 	mpirun \
