@@ -22,6 +22,8 @@ TARGETS = $(addprefix $(BIN_DIR)/, $(addsuffix _mpi, $(BINS)))
 .PHONY: all clean
 
 all: $(TARGETS)
+clean:
+	rm -f $(BIN_DIR)/*_mpi
 
 $(BIN_DIR)/%_mpi: %.cpp
 	$(CXX) $(CXX_FLAGS) -o $@ $< $(INCLUDE_DIRS) $(LIB_DIRS) $(LIBS)
