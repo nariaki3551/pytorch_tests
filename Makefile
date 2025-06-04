@@ -14,6 +14,9 @@ ifeq ($(USE_UCC), 1)
 	$(MAKE) -C ./src/ucc USE_SHARP=$(USE_SHARP) USE_CUDA=$(USE_CUDA)
 endif
 
+build_nccl_test:
+	$(MAKE) -C ./3rd-party/nccl-tests MPI=1 MPI_HOME=$(MPI_HOME) NCCL_HOME=$(NCCL_HOME)
+
 run_test_allgather:
 	$(MAKE) -C ./src/collective run_all
 
@@ -29,3 +32,4 @@ run_test_ucc: build_ucc
 clean:
 	$(MAKE) -C ./src/mpi clean
 	$(MAKE) -C ./src/ucc clean
+	$(MAKE) -C ./3rd-party/nccl-tests clean
