@@ -4,7 +4,7 @@ USE_UCC ?= 0
 
 .PHONY: run_test_allgather run_test_fsdp run_cuda_support_check_mpi run_check_ucc_sharp_support
 
-all: build_mpi build_ucc
+all: build_mpi build_ucc build_nccl_tests
 
 build_mpi:
 	$(MAKE) -C ./src/mpi USE_CUDA=$(USE_CUDA)
@@ -14,7 +14,8 @@ ifeq ($(USE_UCC), 1)
 	$(MAKE) -C ./src/ucc USE_SHARP=$(USE_SHARP) USE_CUDA=$(USE_CUDA)
 endif
 
-build_nccl_test:
+build_nccl_tests:
+	git submodule update --init --recursive
 	$(MAKE) -C ./3rd-party/nccl-tests MPI=1 MPI_HOME=$(MPI_HOME) NCCL_HOME=$(NCCL_HOME)
 
 run_test_allgather:
@@ -28,6 +29,9 @@ run_test_sharp_mpi: build_mpi
 
 run_test_ucc: build_ucc
 	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc
+
+run_test_nccl_tests:
+	$(MAKE) -f ./Makefile.nccl_tests run
 
 clean:
 	$(MAKE) -C ./src/mpi clean

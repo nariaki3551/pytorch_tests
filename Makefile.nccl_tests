@@ -1,0 +1,32 @@
+SNAIL01_V100_1_FLAGS = \
+	--host snail01:1 \
+	--mca plm_rsh_args "-p 2222" \
+	--mca btl_openib_if_include mlx5_1:1 \
+	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+	-x CUDA_VISIBLE_DEVICES=3 \
+	-x NCCL_IB_HCA=mlx5_1
+SNAIL02_V100_1_FLAGS = \
+	--host snail02:1 \
+	--mca plm_rsh_args "-p 2222" \
+	--mca btl_openib_if_include mlx5_2:1 \
+	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+	-x CUDA_VISIBLE_DEVICES=1 \
+	-x NCCL_IB_HCA=mlx5_1
+DEBUG_FLAG = \
+	-x NCCL_DEBUG=INFO
+NCCL_TESTS_DIR = 3rd-party/nccl-tests
+
+run:
+	mpirun \
+		-n 1 \
+		$(SNAIL01_V100_1_FLAGS) \
+		$(DEBUG_FLAG) \
+		$(NCCL_TESTS_DIR)/build/reduce_perf \
+	: \
+		-n 1 \
+		$(SNAIL02_V100_1_FLAGS) \
+		$(DEBUG_FLAG) \
+		$(NCCL_TESTS_DIR)/build/reduce_perf
+
+
+
