@@ -16,7 +16,7 @@ endif
 
 build_nccl_tests:
 	git submodule update --init --recursive
-	$(MAKE) -C ./3rd-party/nccl-tests MPI=1 MPI_HOME=$(MPI_HOME) NCCL_HOME=$(NCCL_HOME)
+	$(MAKE) -C ./3rd-party/nccl-tests MPI=1 MPI_HOME=$(MPI_HOME) NCCL_HOME=$(NCCL_HOME) -j
 
 run_test_allgather:
 	$(MAKE) -C ./src/collective run_all
