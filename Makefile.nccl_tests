@@ -1,9 +1,41 @@
-SNAIL01_V100_1_FLAGS = \
+SNAIL01_V100_FLAGS = \
+	--host snail01:2 \
+	--mca plm_rsh_args "-p 2222" \
+	-x CUDA_VISIBLE_DEVICES=2,3 \
+	-x NCCL_IB_HCA=mlx5_0,mlx5_1
+SNAIL02_V100_FLAGS = \
+	--host snail02:2 \
+	--mca plm_rsh_args "-p 2222" \
+	-x CUDA_VISIBLE_DEVICES=0,1 \
+	-x NCCL_IB_HCA=mlx5_1,mlx5_2
+
+SNAIL01_V100_3_FLAGS = \
 	--host snail01:1 \
 	--mca plm_rsh_args "-p 2222" \
 	--mca btl_openib_if_include mlx5_1:1 \
 	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
 	-x CUDA_VISIBLE_DEVICES=3 \
+	-x NCCL_IB_HCA=mlx5_1
+SNAIL01_V100_2_FLAGS = \
+	--host snail01:1 \
+	--mca plm_rsh_args "-p 2222" \
+	--mca btl_openib_if_include mlx5_1:1 \
+	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+	-x CUDA_VISIBLE_DEVICES=2 \
+	-x NCCL_IB_HCA=mlx5_0
+SNAIL01_V100_3_FLAGS = \
+	--host snail01:1 \
+	--mca plm_rsh_args "-p 2222" \
+	--mca btl_openib_if_include mlx5_1:1 \
+	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+	-x CUDA_VISIBLE_DEVICES=3 \
+	-x NCCL_IB_HCA=mlx5_1
+SNAIL02_V100_0_FLAGS = \
+	--host snail02:1 \
+	--mca plm_rsh_args "-p 2222" \
+	--mca btl_openib_if_include mlx5_2:1 \
+	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
+	-x CUDA_VISIBLE_DEVICES=0 \
 	-x NCCL_IB_HCA=mlx5_1
 SNAIL02_V100_1_FLAGS = \
 	--host snail02:1 \
@@ -11,22 +43,34 @@ SNAIL02_V100_1_FLAGS = \
 	--mca btl_openib_if_include mlx5_2:1 \
 	--mca btl_tcp_if_exclude lo,docker0,docker_gwbridge \
 	-x CUDA_VISIBLE_DEVICES=1 \
-	-x NCCL_IB_HCA=mlx5_1
+	-x NCCL_IB_HCA=mlx5_2
 DEBUG_FLAG = \
 	-x NCCL_DEBUG=INFO
 NCCL_TESTS_DIR = 3rd-party/nccl-tests
 
 run:
 	mpirun \
-		-n 1 \
-		$(SNAIL01_V100_1_FLAGS) \
+		-n 2 \
+		$(SNAIL01_V100_FLAGS) \
 		$(DEBUG_FLAG) \
 		$(NCCL_TESTS_DIR)/build/reduce_perf \
 	: \
-		-n 1 \
-		$(SNAIL02_V100_1_FLAGS) \
+		-n 2 \
+		$(SNAIL02_V100_FLAGS) \
 		$(DEBUG_FLAG) \
 		$(NCCL_TESTS_DIR)/build/reduce_perf
+
+# run:
+# 	mpirun \
+# 		-n 1 \
+# 		$(SNAIL01_V100_3_FLAGS) \
+# 		$(DEBUG_FLAG) \
+# 		$(NCCL_TESTS_DIR)/build/reduce_perf \
+# 	: \
+# 		-n 1 \
+# 		$(SNAIL02_V100_1_FLAGS) \
+# 		$(DEBUG_FLAG) \
+# 		$(NCCL_TESTS_DIR)/build/reduce_perf
 
 
 
