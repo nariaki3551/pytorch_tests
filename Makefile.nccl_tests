@@ -14,6 +14,14 @@ TVM01_V100_FLAGS = \
 	--host tvm01:2 \
 	-x CUDA_VISIBLE_DEVICES=0,1 \
 	-x NCCL_IB_HCA=mlx5_1,mlx5_2
+TVM02_V100_FLAGS = \
+	--host tvm02:2 \
+	-x CUDA_VISIBLE_DEVICES=0,1 \
+	-x NCCL_IB_HCA=mlx5_1,mlx5_2
+SNAIL99_V100_FLAGS = \
+	--host snail99:2 \
+	-x CUDA_VISIBLE_DEVICES=0,1 \
+	-x NCCL_IB_HCA=mlx5_1,mlx5_2
 
 
 SNAIL01_V100_3_FLAGS = \
@@ -39,52 +47,20 @@ SNAIL02_V100_1_FLAGS = \
 
 FLAGS = \
 	--mca plm_rsh_args "-p 2222" \
-	-x NCCL_DEBUG=INFO
+	-x NCCL_DEBUG=TRACE
 
 run:
 	mpirun \
-		-n 2 \
-		$(SNAIL01_V100_FLAGS) \
-		$(FLAGS) \
-		3rd-party/nccl-tests/build/reduce_perf \
-	: \
-		-n 2 \
-		$(SNAIL02_V100_FLAGS) \
-		$(FLAGS) \
-		3rd-party/nccl-tests/build/reduce_perf \
-	: \
-		-n 2 \
-		$(SNAIL03_V100_FLAGS) \
-		$(FLAGS) \
-		3rd-party/nccl-tests/build/reduce_perf \
-	: \
-		-n 2 \
-		$(TVM01_V100_FLAGS) \
-		$(FLAGS) \
-		3rd-party/nccl-tests/build/reduce_perf
+	  -n 2 $(SNAIL01_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf \
+	: -n 2 $(SNAIL02_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf \
+	: -n 2 $(SNAIL03_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf \
+	: -n 2 $(TVM01_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf \
+	: -n 2 $(TVM02_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf
+
 
 run_tvm01:
 	mpirun \
-		-n 2 \
-		$(SNAIL01_V100_FLAGS) \
-		$(FLAGS) \
-		3rd-party/nccl-tests/build/reduce_perf \
-	: \
-		-n 2 \
-		$(TVM01_V100_FLAGS) \
-		$(FLAGS) \
-		3rd-party/nccl-tests/build/reduce_perf
-# run:
-# 	mpirun \
-# 		-n 1 \
-# 		$(SNAIL01_V100_3_FLAGS) \
-# 		$(FLAGS) \
-# 		$(NCCL_TESTS_DIR)/build/reduce_perf \
-# 	: \
-# 		-n 1 \
-# 		$(SNAIL02_V100_1_FLAGS) \
-# 		$(FLAGS) \
-# 		$(NCCL_TESTS_DIR)/build/reduce_perf
-
+	  -n 2 $(SNAIL01_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf \
+	: -n 2 $(TVM01_V100_FLAGS) $(FLAGS) 3rd-party/nccl-tests/build/reduce_perf
 
 
