@@ -15,8 +15,10 @@ ifeq ($(USE_UCC), 1)
 endif
 
 build_nccl_tests:
+ifeq ($(USE_CUDA), 1)
 	git submodule update --init --recursive
 	$(MAKE) -C ./3rd-party/nccl-tests MPI=1 MPI_HOME=$(MPI_HOME) NCCL_HOME=$(NCCL_HOME) -j
+endif
 
 run_test_allgather:
 	$(MAKE) -C ./src/collective run_all
