@@ -34,3 +34,50 @@ run_allreduce_perf:
 	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
 	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
 
+SNAIL01_V100_2_FLAGS = --host snail01:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=2 -x NCCL_IB_HCA=mlx5_0
+SNAIL01_V100_3_FLAGS = --host snail01:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=3 -x NCCL_IB_HCA=mlx5_1
+SNAIL02_V100_0_FLAGS = --host snail02:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+SNAIL02_V100_1_FLAGS = --host snail02:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+SNAIL03_V100_0_FLAGS = --host snail03:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+SNAIL03_V100_1_FLAGS = --host snail03:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+TVM01_V100_0_FLAGS   = --host tvm01:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+TVM01_V100_1_FLAGS   = --host tvm01:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+TVM02_V100_0_FLAGS   = --host tvm02:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+TVM02_V100_1_FLAGS   = --host tvm02:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+
+# run_reduce_scatter_perf:
+# 	mpirun \
+# 	  -n 1 $(SNAIL01_V100_2_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL01_V100_3_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL02_V100_0_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL02_V100_1_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL03_V100_0_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL03_V100_1_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM01_V100_0_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM01_V100_1_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM02_V100_0_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM02_V100_1_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+#
+# Warning: This is fail because of the following reason.
+# 
+# # nThread 1 nGpus 1 minBytes 1024 maxBytes 33554400 step: 2(factor) warmup iters: 10 iters: 20 agg iters: 1 validation: 1 graph: 0
+# Using devices
+# snail02: Test CUDA failure common.cu:1030 'invalid device ordinal'
+#  .. snail02 pid 11994: Test failure common.cu:937
+# tvm02: Test CUDA failure common.cu:1030 'invalid device ordinal'
+#  .. tvm02 pid 892: Test failure common.cu:937
+# snail03: Test CUDA failure common.cu:1030 'invalid device ordinal'
+#  .. snail03 pid 873: Test failure common.cu:937
+# snail01: Test CUDA failure common.cu:1030 'invalid device ordinal'
+#  .. snail01 pid 1013: Test failure common.cu:937
+# tvm01: Test CUDA failure common.cu:1030 'invalid device ordinal'
+#  .. tvm01 pid 892: Test failure common.cu:937
+# --------------------------------------------------------------------------
+# prterun detected that one or more processes exited with non-zero status,
+# thus causing the job to be terminated. The first process to do so was:
+# 
+#    Process name: [prterun-snail02-11986@1,9]
+#    Exit code:    2
+# --------------------------------------------------------------------------
+# make: *** [Makefile.nccl_tests:34: run_reduce_scatter_perf] Error 2
+
