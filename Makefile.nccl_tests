@@ -1,62 +1,63 @@
 SSH_PORT ?= 12345
 
-SNAIL01_FLAGS = --host snail01:2 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=2,3 -x NCCL_IB_HCA=mlx5_0,mlx5_1
-SNAIL02_FLAGS = --host snail02:2 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
-SNAIL03_FLAGS = --host snail03:2 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
-TVM01_FLAGS   = --host tvm01:2   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
-TVM02_FLAGS   = --host tvm02:2   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
+SNAIL01_FLAGS = --host snail01:2 -x CUDA_VISIBLE_DEVICES=2,3 -x NCCL_IB_HCA=mlx5_0,mlx5_1
+SNAIL02_FLAGS = --host snail02:2 -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
+SNAIL03_FLAGS = --host snail03:2 -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
+TVM01_FLAGS   = --host tvm01:2   -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
+TVM02_FLAGS   = --host tvm02:2   -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
 
-# DEBUG_FLAG = -x NCCL_DEBUG=INFO
+FLAG = --mca plm_rsh_args "-p $(SSH_PORT)"
+# FLAG += -x NCCL_DEBUG=INFO
 NCCL_TESTS_DIR = 3rd-party/nccl-tests
 TEST_ARGS = -b 1024 -e 33554400 -f 2 -i 100 -w 10
 
 run_reduce_scatter_perf:
 	mpirun \
-	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	  -n 2 $(SNAIL01_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL02_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL03_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(TVM01_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(TVM02_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
 
 run_allgather_perf:
 	mpirun \
-	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	  -n 2 $(SNAIL01_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL02_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL03_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(TVM01_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(TVM02_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
 
 run_allreduce_perf:
 	mpirun \
-	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
-	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
-	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	  -n 2 $(SNAIL01_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL02_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL03_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(TVM01_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(TVM02_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
 
-SNAIL01_V100_2_FLAGS = --host snail01:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=2 -x NCCL_IB_HCA=mlx5_0
-SNAIL01_V100_3_FLAGS = --host snail01:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=3 -x NCCL_IB_HCA=mlx5_1
-SNAIL02_V100_0_FLAGS = --host snail02:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
-SNAIL02_V100_1_FLAGS = --host snail02:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
-SNAIL03_V100_0_FLAGS = --host snail03:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
-SNAIL03_V100_1_FLAGS = --host snail03:1 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
-TVM01_V100_0_FLAGS   = --host tvm01:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
-TVM01_V100_1_FLAGS   = --host tvm01:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
-TVM02_V100_0_FLAGS   = --host tvm02:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
-TVM02_V100_1_FLAGS   = --host tvm02:1   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+SNAIL01_V100_2_FLAGS = --host snail01:1 -x CUDA_VISIBLE_DEVICES=2 -x NCCL_IB_HCA=mlx5_0
+SNAIL01_V100_3_FLAGS = --host snail01:1 -x CUDA_VISIBLE_DEVICES=3 -x NCCL_IB_HCA=mlx5_1
+SNAIL02_V100_0_FLAGS = --host snail02:1 -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+SNAIL02_V100_1_FLAGS = --host snail02:1 -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+SNAIL03_V100_0_FLAGS = --host snail03:1 -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+SNAIL03_V100_1_FLAGS = --host snail03:1 -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+TVM01_V100_0_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+TVM01_V100_1_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
+TVM02_V100_0_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=0 -x NCCL_IB_HCA=mlx5_1
+TVM02_V100_1_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA=mlx5_2
 
 # run_reduce_scatter_perf:
 # 	mpirun \
-# 	  -n 1 $(SNAIL01_V100_2_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(SNAIL01_V100_3_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(SNAIL02_V100_0_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(SNAIL02_V100_1_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(SNAIL03_V100_0_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(SNAIL03_V100_1_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(TVM01_V100_0_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(TVM01_V100_1_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(TVM02_V100_0_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
-# 	: -n 1 $(TVM02_V100_1_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+# 	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
 #
 # Warning: This is fail because of the following reason.
 # 
