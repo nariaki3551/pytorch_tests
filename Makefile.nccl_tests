@@ -6,16 +6,31 @@ SNAIL03_FLAGS = --host snail03:2 --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VIS
 TVM01_FLAGS   = --host tvm01:2   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
 TVM02_FLAGS   = --host tvm02:2   --mca plm_rsh_args "-p $(SSH_PORT)" -x CUDA_VISIBLE_DEVICES=0,1 -x NCCL_IB_HCA=mlx5_1,mlx5_2
 
-DEBUG_FLAG = -x NCCL_DEBUG=INFO
+# DEBUG_FLAG = -x NCCL_DEBUG=INFO
 NCCL_TESTS_DIR = 3rd-party/nccl-tests
+TEST_ARGS = -b 1024 -e 33554400 -f 2 -i 100 -w 10
 
-run:
+run_reduce_scatter_perf:
 	mpirun \
-	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_perf \
-	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_perf \
-	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_perf \
-	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_perf \
-	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_perf \
+	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
+	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/reduce_scatter_perf $(TEST_ARGS) \
 
+run_allgather_perf:
+	mpirun \
+	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
 
+run_allreduce_perf:
+	mpirun \
+	  -n 2 $(SNAIL01_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL02_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(SNAIL03_FLAGS) $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(TVM01_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
+	: -n 2 $(TVM02_FLAGS)   $(DEBUG_FLAG) $(NCCL_TESTS_DIR)/build/all_reduce_perf $(TEST_ARGS) \
 

@@ -34,7 +34,7 @@ run_test_ucc: build_ucc
 	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc
 
 run_test_nccl_tests:
-	$(MAKE) -f ./Makefile.nccl_tests SSH_PORT=$(SSH_PORT) run
+	$(MAKE) -f ./Makefile.nccl_tests SSH_PORT=$(SSH_PORT) run_reduce_scatter_perf
 
 clean:
 	$(MAKE) -C ./src/mpi clean
