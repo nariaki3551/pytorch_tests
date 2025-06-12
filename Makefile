@@ -1,6 +1,7 @@
 USE_CUDA ?= 1
 USE_SHARP ?= 1
 USE_UCC ?= 0
+SSH_PORT ?= 12345
 
 .PHONY: run_test_allgather run_test_fsdp run_cuda_support_check_mpi run_check_ucc_sharp_support
 
@@ -33,7 +34,7 @@ run_test_ucc: build_ucc
 	$(MAKE) -C ./src/ucc run_check_sharp_support_ucc
 
 run_test_nccl_tests:
-	$(MAKE) -f ./Makefile.nccl_tests run
+	$(MAKE) -f ./Makefile.nccl_tests SSH_PORT=$(SSH_PORT) run
 
 clean:
 	$(MAKE) -C ./src/mpi clean
