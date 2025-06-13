@@ -10,7 +10,7 @@ SRCS = test_allgather.cpp test_reducescatter.cpp
 ifeq ($(USE_CUDA), 1)
 	LIB_DIRS = -L/usr/local/cuda/lib64
 	LIBS = -lcudart -lmpi
-	SRCS += check_cuda_support.cpp test_allgather_cuda.cpp test_reducescatter_cuda.cpp
+	SRCS += check_cuda_support.cpp test_allgather_cuda.cpp test_reducescatter_cuda.cpp iallgather_perf_cuda.cpp
 endif
 
 BIN_DIR = ../../bin
@@ -67,127 +67,143 @@ FLAGS += \
 run_cuda_support_check: $(BIN_DIR)/check_cuda_support_mpi
 	mpirun -np 1 $<
 
-run_test_allgather: $(BIN_DIR)/test_allgather_mpi
-	mpirun -n 2 $<
-
-run_test_allgather_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
-	mpirun -n 2 $<
+run_multinode_tests: \
+	run_test_allgather_multinode_ucp \
+	run_test_allgather_multinode_ucp_cuda \
+	run_test_allgather_multinode_spin \
+	run_test_allgather_multinode_spin_cuda \
+	run_test_reducescatter_multinode_ucp \
+	run_test_reducescatter_multinode_ucp_cuda \
+	run_test_reducescatter_multinode_sharp \
+	run_test_reducescatter_multinode_sharp_cuda \
 
 run_test_allgather_multinode_ucp: $(BIN_DIR)/test_allgather_mpi
 	@echo "run_test_allgather_multinode_ucp"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
 
 run_test_allgather_multinode_ucp_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
 	@echo "run_test_allgather_multinode_ucp_cuda"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
 
 run_test_allgather_multinode_spin: $(BIN_DIR)/test_allgather_mpi
 	@echo "run_test_allgather_multinode_spin"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
 
 run_test_allgather_multinode_spin_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
 	@echo "run_test_allgather_multinode_spin_cuda"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
 
-run_test_reducescatter: $(BIN_DIR)/test_reducescatter_mpi
-	mpirun -n 2 $<
+run_test_allgather_multinode_spin_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
+	@echo "Running test_allgather_cuda_mpi with rankfile"
+	mpirun -np 10 \
+	  --host snail01:2,snail02:2,snail03:2,tvm01:2,tvm02:2 \
+	  --map-by rankfile:file=rankfile.cuda \
+	  $(FLAGS) \
+	  $(UCC_FLAGS) \
+	  $(SPIN_FLAGS) \
+	  -x UCC_CL_BASIC_TLS=spin,ucp \
+	  ../../bin/test_allgather_cuda_mpi
 
-run_test_reducescatter_cuda: $(BIN_DIR)/test_reducescatter_cuda_mpi
-	mpirun -n 2 $<
+run_test_allgather_multinode_spin_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
+	@echo "run_test_allgather_multinode_spin_cuda"
+	mpirun \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< \
+
 
 run_test_reducescatter_multinode_ucp: $(BIN_DIR)/test_reducescatter_mpi
 	@echo "run_test_reducescatter_multinode_ucp"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
 
 run_test_reducescatter_multinode_ucp_cuda: $(BIN_DIR)/test_reducescatter_cuda_mpi
 	@echo "run_test_reducescatter_multinode_ucp_cuda"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
 
 run_test_reducescatter_multinode_sharp: $(BIN_DIR)/test_reducescatter_mpi
 	@echo "run_test_reducescatter_multinode_sharp"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
 
 run_test_reducescatter_multinode_sharp_cuda: $(BIN_DIR)/test_reducescatter_cuda_mpi
 	@echo "run_test_reducescatter_multinode_sharp_cuda"
 	mpirun \
-	  -n 1 $(SNAIL01_V100_2_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(UCC_FLAGS) $(FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	  -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
 
