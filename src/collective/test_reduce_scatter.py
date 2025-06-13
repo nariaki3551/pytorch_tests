@@ -13,7 +13,9 @@ def main(args):
 
     for dtype in dtype_ints:
         for reduce_op in reduce_ops:
-            if reduce_op == dist.ReduceOp.AVG:
+            if args.sharp and dtype == torch.int8:
+                continue
+            if args.sharp and reduce_op != dist.ReduceOp.SUM:
                 continue
             if dtype == torch.int16 and args.backend == 'nccl':
                 continue # NCCL does not support short (int16)
@@ -24,6 +26,8 @@ def main(args):
 
     for dtype in dtype_floats:
         for reduce_op in reduce_ops:
+            if args.sharp and reduce_op != dist.ReduceOp.SUM:
+                continue
             test_reduce_scatter(args, dtype, reduce_op)
             test_reduce_scatter_tensor(args, dtype, reduce_op)
 
@@ -66,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument('--backend', type=str, default='mpi', choices=['mpi', 'ucc', 'nccl', 'gloo'], help='Backend to use')
     parser.add_argument('--count', type=int, default=3, help='Number of elements in each tensor')
     parser.add_argument('--device', type=str, default='cpu', choices=['cpu', 'cuda'], help='Device to run the test on')
+    parser.add_argument('--sharp', action='store_true', help='Use SHARP backend')
     args = parser.parse_args()
 
     if args.backend == 'mpi':
