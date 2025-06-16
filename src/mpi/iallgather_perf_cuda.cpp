@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     if (ctx.rank == 0) {
         printf("# iallgather benchmark\n");
         printf("# min: %lu, max: %lu, step: %.1f, warmup: %d, iters: %d\n", min_count, max_count, step_factor, warmup, iterations);
-        printf("# size(bytes)\tavg_time(s)\n");
+        printf("# size(Kbytes)\tavg_time(s)\n");
     }
     fflush(stdout);
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
         check_recv_buff(&ctx);
         double avg_time = total_time / iterations;
         if (ctx.rank == 0) {
-            printf("%zu\t%.6f\n", count * sizeof(int), avg_time);
+            printf("%.6f\t%.6f\n", count * sizeof(int) / 1024.0, avg_time);
         }
         fflush(stdout);
 
