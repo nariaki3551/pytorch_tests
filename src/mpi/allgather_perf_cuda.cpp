@@ -14,15 +14,14 @@ struct Context {
     int* recv_buff;
 };
 
-double do_iallgather(Context *ctx) {
+double do_allgather(Context *ctx) {
     MPI_Request request;
     double elapsed_time = - MPI_Wtime();
-    MPI_Iallgather(
+    MPI_Allgather(
         ctx->send_buff, ctx->count, MPI_INT,
         ctx->recv_buff, ctx->count, MPI_INT,
-        MPI_COMM_WORLD, &request
+        MPI_COMM_WORLD
     );
-    MPI_Wait(&request, MPI_STATUS_IGNORE);
     elapsed_time += MPI_Wtime();
     return elapsed_time;
 }
@@ -71,7 +70,8 @@ int main(int argc, char** argv) {
     if (ctx.rank == 0) {
         printf("# iallgather benchmark\n");
         printf("# min: %lu, max: %lu, step: %.1f, warmup: %d, iters: %d\n", min_count, max_count, step_factor, warmup, iterations);
-        printf("# size(bytes)\tavg_time(s)\n");
+        printf("# size is the data size which each rank sends\n");
+        printf("# dtype\tcount\tsize(Kbytes)\tavg_time(s)\n");
     }
     fflush(stdout);
 
@@ -84,23 +84,36 @@ int main(int argc, char** argv) {
         }
 
         for (int i = 0; i < warmup; ++i) {
-            do_iallgather(&ctx);
+            do_allgather(&ctx);
         }
 
         double total_time = 0.0;
         for (int i = 0; i < iterations; ++i) {
-            total_time += do_iallgather(&ctx);
+            total_time += do_allgather(&ctx);
         }
 
         check_recv_buff(&ctx);
         double avg_time = total_time / iterations;
         if (ctx.rank == 0) {
-            printf("%zu\t%.6f\n", count * sizeof(int), avg_time);
+            printf("int\t%ld\t\t%.6f\t%.6f\n", count, count * sizeof(int) / 1024.0, avg_time);
         }
         fflush(stdout);
 
         free(ctx.send_buff);
         free(ctx.recv_buff);
+    }
+
+    size_t total_sent_words = 0;
+    size_t total_received_words = 0;
+    for (size_t count = min_count; count <= max_count; count = static_cast<size_t>(count * step_factor)) {
+        int rounds = warmup + iterations;
+        total_sent_words += static_cast<size_t>(count * rounds);
+        total_received_words += static_cast<size_t>(count * ctx.size * rounds);
+    }
+
+    if (ctx.rank == 0) {
+        printf("# Total data sent per rank: %lu words\n", total_sent_words);
+        printf("# Total data received per rank: %lu words\n", total_received_words);
     }
 
     MPI_Finalize();
