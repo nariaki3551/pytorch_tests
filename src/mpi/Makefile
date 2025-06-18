@@ -40,7 +40,8 @@ SPIN_FLAGS = \
 	-x UCC_TL_SPIN_TUNE=allgather:inf \
 	-x UCC_TL_SPIN_MIN_TEAM_SIZE=2 \
 	-x UCC_TL_SPIN_TEAM_MAX_PPN=2 \
-	-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648
+	-x UCC_TL_SPIN_MAX_RECV_BUF_SIZE=2147483648 \
+	-x UCC_TL_SPIN_TIMEOUT_SCALING=500
 UCC_FLAGS = \
 	--mca coll_ucc_enable 1 \
 	--mca coll_ucc_priority 100 \
@@ -193,56 +194,58 @@ run_test_reducescatter_multinode_sharp_cuda: $(BIN_DIR)/test_reducescatter_cuda_
 	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< \
 
 
-run_allgather_perf_ucp_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
-	mpirun \
-	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< \
-
 MIN_COUNT ?= 1024
 MAX_COUNT ?= 134217728
+WORMUP ?= 5
+ITERATIONS ?= 20
+run_allgather_perf_ucp_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
+	mpirun \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+
 run_allgather_perf_spin_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
 	mpirun \
-	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
 
 run_reducescatter_perf_ucp_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
 	mpirun \
-	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
 
 run_reducescatter_perf_sharp_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
 	mpirun \
-	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) \
-	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MIN_COUNT) \
-	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MIN_COUNT) \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SHARP_FLAGS) -x UCC_CL_BASIC_TLS=sharp,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) \

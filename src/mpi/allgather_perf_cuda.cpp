@@ -68,10 +68,10 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &ctx.size);
 
     if (ctx.rank == 0) {
-        printf("# iallgather benchmark\n");
+        printf("# allgather benchmark\n");
         printf("# min: %lu, max: %lu, step: %.1f, warmup: %d, iters: %d\n", min_count, max_count, step_factor, warmup, iterations);
         printf("# size is the data size which each rank sends\n");
-        printf("# dtype\tcount\tsize(Kbytes)\tavg_time(s)\n");
+        printf("# dtype\tcount\t\tsize(Kbytes)\tavg_time(s)\n");
     }
     fflush(stdout);
 
@@ -103,17 +103,20 @@ int main(int argc, char** argv) {
         free(ctx.recv_buff);
     }
 
-    size_t total_sent_words = 0;
-    size_t total_received_words = 0;
+    double total_sent_words = 0;
+    double total_received_words = 0;
     for (size_t count = min_count; count <= max_count; count = static_cast<size_t>(count * step_factor)) {
         int rounds = warmup + iterations;
-        total_sent_words += static_cast<size_t>(count * rounds);
-        total_received_words += static_cast<size_t>(count * ctx.size * rounds);
+        total_sent_words += static_cast<double>(count * sizeof(int) * rounds);
+        total_received_words += static_cast<double>(count * sizeof(int) * ctx.size * rounds);
     }
 
     if (ctx.rank == 0) {
-        printf("# Total data sent per rank: %lu words\n", total_sent_words);
-        printf("# Total data received per rank: %lu words\n", total_received_words);
+        double n = static_cast<double>(ctx.size);
+        printf("# Total data sent per rank in multicast: %.1f words\n", total_sent_words / 4.0);
+        printf("# Total data received per rank in multicast: %.1f words\n", total_received_words / 4.0);
+        printf("# Total data sent per rank in ring algo: %.1f words\n", (n-1)/ n * total_received_words / 4.0);
+        printf("# Total data received per rank in ring algo: %.1f words\n", (n-1)/ n * total_received_words / 4.0);
     }
 
     MPI_Finalize();
