@@ -51,6 +51,8 @@ FLAGS += \
 	-x UCC_TL_LOG_LEVEL=trace \
 	-x NCCL_DEBUG=INFO
 
+test:
+	mpirun -n 2 -- python3 test_allgather.py --backend mpi
 
 run_allgather_multinode_ucp:
 	mpirun \

@@ -40,3 +40,6 @@ clean:
 	$(MAKE) -C ./src/mpi clean
 	$(MAKE) -C ./src/ucc clean
 	$(MAKE) -C ./3rd-party/nccl-tests clean
+
+test:
+	$(MAKE) -f ./Makefile.nccl_tests test
