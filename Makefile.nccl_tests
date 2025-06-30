@@ -82,3 +82,14 @@ TVM02_V100_1_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=1 -x NCCL_IB_HCA
 # --------------------------------------------------------------------------
 # make: *** [Makefile.nccl_tests:34: run_reduce_scatter_perf] Error 2
 
+test:
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/all_reduce_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/hypercube_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/scatter_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/all_gather_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/broadcast_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/gather_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/reduce_scatter_perf         
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/alltoall_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/reduce_perf
+	mpirun -n 2 $(NCCL_TESTS_DIR)/build/sendrecv_perf        
