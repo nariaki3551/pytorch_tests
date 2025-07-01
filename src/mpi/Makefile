@@ -65,7 +65,8 @@ TVM01_V100_1_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHAR
 TVM02_V100_0_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=0
 TVM02_V100_1_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=2
 
-FLAGS = --mca plm_rsh_args "-p $(SSH_PORT)" -x PATH=$PATH -x LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+
+FLAGS = --mca plm_rsh_args "-p $(SSH_PORT)"
 ifeq ($(DEBUG), 1)
 FLAGS += \
 	-x UCC_TL_SHARP_VERBOSE=3 \
@@ -220,8 +221,22 @@ run_allgather_perf_ucp_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
 	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 
+run_allgather_perf_ucp_cuda_perf: $(BIN_DIR)/allgather_perf_cuda_mpi
+	mpirun \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) -x UCC_CL_BASIC_TLS=ucp -- perf record -g fp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+
 run_allgather_perf_spin_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
 	mpirun \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
@@ -231,6 +246,78 @@ run_allgather_perf_spin_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
 	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
 	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+
+run_allgather_perf_spin_cuda_data_1: $(BIN_DIR)/allgather_perf_cuda_mpi
+	mpirun \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 0 -o /tmp/perf.rank0.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 2 -o /tmp/perf.rank1.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 0 -o /tmp/perf.rank2.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 2 -o /tmp/perf.rank3.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 0 -o /tmp/perf.rank4.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 2 -o /tmp/perf.rank5.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 0 -o /tmp/perf.rank6.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 2 -o /tmp/perf.rank7.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 0 -o /tmp/perf.rank8.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 2 -o /tmp/perf.rank9.cpu0.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+
+run_allgather_perf_spin_cuda_data_2: $(BIN_DIR)/allgather_perf_cuda_mpi
+	mpirun \
+	: -n 1 $(SNAIL01_V100_2_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 1 -o /tmp/perf.rank0.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL01_V100_3_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 3 -o /tmp/perf.rank1.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 1 -o /tmp/perf.rank2.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 3 -o /tmp/perf.rank3.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 1 -o /tmp/perf.rank4.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 3 -o /tmp/perf.rank5.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 1 -o /tmp/perf.rank6.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 3 -o /tmp/perf.rank7.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 1 -o /tmp/perf.rank8.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) -x UCC_CL_BASIC_TLS=spin,ucp -- perf record -g -a -C 3 -o /tmp/perf.rank9.cpu1.data -- $< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WORMUP) -n $(ITERATIONS) -s $(STEP) \
+
+FG=/opt/FlameGraph
+run_allgather_perf_spin_cuda_data:
+	make run_allgather_perf_spin_cuda_data_1 MIN_COUNT=128 MAX_COUNT=128 WORMUP=0 ITERATIONS=10 DEBUG=0 SPIN_CQ_DEPTH=4194303 SPIN_SQ_DEPTH=16384 SPIN_RQ_DEPTH=32768 SPIN_TIMEOUT_SCALING=1000000 DEBUG=0
+	make run_allgather_perf_spin_cuda_data_2 MIN_COUNT=128 MAX_COUNT=128 WORMUP=0 ITERATIONS=10 DEBUG=0 SPIN_CQ_DEPTH=4194303 SPIN_SQ_DEPTH=16384 SPIN_RQ_DEPTH=32768 SPIN_TIMEOUT_SCALING=1000000 DEBUG=0 
+	ssh -p 12345 snail01 "perf script -i /tmp/perf.rank0.cpu0.data > /tmp/p00.out; $(FG)/stackcollapse-perf.pl /tmp/p00.out > /tmp/p00.folded; $(FG)/flamegraph.pl /tmp/p00.folded > /tmp/perf.rank0.cpu0.svg"
+	ssh -p 12345 snail01 "perf script -i /tmp/perf.rank0.cpu1.data > /tmp/p01.out; $(FG)/stackcollapse-perf.pl /tmp/p01.out > /tmp/p01.folded; $(FG)/flamegraph.pl /tmp/p01.folded > /tmp/perf.rank0.cpu1.svg"
+	ssh -p 12345 snail01 "perf script -i /tmp/perf.rank1.cpu0.data > /tmp/p10.out; $(FG)/stackcollapse-perf.pl /tmp/p10.out > /tmp/p10.folded; $(FG)/flamegraph.pl /tmp/p10.folded > /tmp/perf.rank1.cpu0.svg"
+	ssh -p 12345 snail01 "perf script -i /tmp/perf.rank1.cpu1.data > /tmp/p11.out; $(FG)/stackcollapse-perf.pl /tmp/p11.out > /tmp/p11.folded; $(FG)/flamegraph.pl /tmp/p11.folded > /tmp/perf.rank1.cpu1.svg"
+	ssh -p 12345 snail02 "perf script -i /tmp/perf.rank2.cpu0.data > /tmp/p20.out; $(FG)/stackcollapse-perf.pl /tmp/p20.out > /tmp/p20.folded; $(FG)/flamegraph.pl /tmp/p20.folded > /tmp/perf.rank2.cpu0.svg"
+	ssh -p 12345 snail02 "perf script -i /tmp/perf.rank2.cpu1.data > /tmp/p21.out; $(FG)/stackcollapse-perf.pl /tmp/p21.out > /tmp/p21.folded; $(FG)/flamegraph.pl /tmp/p21.folded > /tmp/perf.rank2.cpu1.svg"
+	ssh -p 12345 snail02 "perf script -i /tmp/perf.rank3.cpu0.data > /tmp/p30.out; $(FG)/stackcollapse-perf.pl /tmp/p30.out > /tmp/p30.folded; $(FG)/flamegraph.pl /tmp/p30.folded > /tmp/perf.rank3.cpu0.svg"
+	ssh -p 12345 snail02 "perf script -i /tmp/perf.rank3.cpu1.data > /tmp/p31.out; $(FG)/stackcollapse-perf.pl /tmp/p31.out > /tmp/p31.folded; $(FG)/flamegraph.pl /tmp/p31.folded > /tmp/perf.rank3.cpu1.svg"
+	ssh -p 12345 snail03 "perf script -i /tmp/perf.rank4.cpu0.data > /tmp/p40.out; $(FG)/stackcollapse-perf.pl /tmp/p40.out > /tmp/p40.folded; $(FG)/flamegraph.pl /tmp/p40.folded > /tmp/perf.rank4.cpu0.svg"
+	ssh -p 12345 snail03 "perf script -i /tmp/perf.rank4.cpu1.data > /tmp/p41.out; $(FG)/stackcollapse-perf.pl /tmp/p41.out > /tmp/p41.folded; $(FG)/flamegraph.pl /tmp/p41.folded > /tmp/perf.rank4.cpu1.svg"
+	ssh -p 12345 snail03 "perf script -i /tmp/perf.rank5.cpu0.data > /tmp/p50.out; $(FG)/stackcollapse-perf.pl /tmp/p50.out > /tmp/p50.folded; $(FG)/flamegraph.pl /tmp/p50.folded > /tmp/perf.rank5.cpu0.svg"
+	ssh -p 12345 snail03 "perf script -i /tmp/perf.rank5.cpu1.data > /tmp/p51.out; $(FG)/stackcollapse-perf.pl /tmp/p51.out > /tmp/p51.folded; $(FG)/flamegraph.pl /tmp/p51.folded > /tmp/perf.rank5.cpu1.svg"
+	ssh -p 12345 tvm01 "perf script -i /tmp/perf.rank6.cpu0.data > /tmp/p60.out; $(FG)/stackcollapse-perf.pl /tmp/p60.out > /tmp/p60.folded; $(FG)/flamegraph.pl /tmp/p60.folded > /tmp/perf.rank6.cpu0.svg"
+	ssh -p 12345 tvm01 "perf script -i /tmp/perf.rank6.cpu1.data > /tmp/p61.out; $(FG)/stackcollapse-perf.pl /tmp/p61.out > /tmp/p61.folded; $(FG)/flamegraph.pl /tmp/p61.folded > /tmp/perf.rank6.cpu1.svg"
+	ssh -p 12345 tvm01 "perf script -i /tmp/perf.rank7.cpu0.data > /tmp/p70.out; $(FG)/stackcollapse-perf.pl /tmp/p70.out > /tmp/p70.folded; $(FG)/flamegraph.pl /tmp/p70.folded > /tmp/perf.rank7.cpu0.svg"
+	ssh -p 12345 tvm01 "perf script -i /tmp/perf.rank7.cpu1.data > /tmp/p71.out; $(FG)/stackcollapse-perf.pl /tmp/p71.out > /tmp/p71.folded; $(FG)/flamegraph.pl /tmp/p71.folded > /tmp/perf.rank7.cpu1.svg"
+	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank8.cpu0.data > /tmp/p80.out; $(FG)/stackcollapse-perf.pl /tmp/p80.out > /tmp/p80.folded; $(FG)/flamegraph.pl /tmp/p80.folded > /tmp/perf.rank8.cpu0.svg"
+	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank8.cpu1.data > /tmp/p81.out; $(FG)/stackcollapse-perf.pl /tmp/p81.out > /tmp/p81.folded; $(FG)/flamegraph.pl /tmp/p81.folded > /tmp/perf.rank8.cpu1.svg"
+	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank9.cpu0.data > /tmp/p90.out; $(FG)/stackcollapse-perf.pl /tmp/p90.out > /tmp/p90.folded; $(FG)/flamegraph.pl /tmp/p90.folded > /tmp/perf.rank9.cpu0.svg"
+	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank9.cpu1.data > /tmp/p91.out; $(FG)/stackcollapse-perf.pl /tmp/p91.out > /tmp/p91.folded; $(FG)/flamegraph.pl /tmp/p91.folded > /tmp/perf.rank9.cpu1.svg"
+	scp -P 12345 snail01:/tmp/perf.rank0.cpu0.svg .
+	scp -P 12345 snail01:/tmp/perf.rank0.cpu1.svg .
+	scp -P 12345 snail01:/tmp/perf.rank1.cpu0.svg .
+	scp -P 12345 snail01:/tmp/perf.rank1.cpu1.svg .
+	scp -P 12345 snail02:/tmp/perf.rank2.cpu0.svg .
+	scp -P 12345 snail02:/tmp/perf.rank2.cpu1.svg .
+	scp -P 12345 snail02:/tmp/perf.rank3.cpu0.svg .
+	scp -P 12345 snail02:/tmp/perf.rank3.cpu1.svg .
+	scp -P 12345 snail03:/tmp/perf.rank4.cpu0.svg .
+	scp -P 12345 snail03:/tmp/perf.rank4.cpu1.svg .
+	scp -P 12345 snail03:/tmp/perf.rank5.cpu0.svg .
+	scp -P 12345 snail03:/tmp/perf.rank5.cpu1.svg .
+	scp -P 12345 tvm01:/tmp/perf.rank6.cpu0.svg .
+	scp -P 12345 tvm01:/tmp/perf.rank6.cpu1.svg .
+	scp -P 12345 tvm01:/tmp/perf.rank7.cpu0.svg .
+	scp -P 12345 tvm01:/tmp/perf.rank7.cpu1.svg .
+	scp -P 12345 tvm02:/tmp/perf.rank8.cpu0.svg .
+	scp -P 12345 tvm02:/tmp/perf.rank8.cpu1.svg .
+	scp -P 12345 tvm02:/tmp/perf.rank9.cpu0.svg .
+	scp -P 12345 tvm02:/tmp/perf.rank9.cpu1.svg .
+
 
 run_reducescatter_perf_ucp_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
 	mpirun \
