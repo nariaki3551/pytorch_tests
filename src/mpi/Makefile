@@ -275,6 +275,7 @@ run_allgather_perf_spin_cuda_data_2: $(BIN_DIR)/allgather_perf_cuda_mpi
 
 FG=/opt/FlameGraph
 run_allgather_perf_spin_cuda_data:
+	mkdir -p ./data
 	make run_allgather_perf_spin_cuda_data_1 MIN_COUNT=128 MAX_COUNT=128 WORMUP=0 ITERATIONS=10 DEBUG=0 SPIN_CQ_DEPTH=4194303 SPIN_SQ_DEPTH=16384 SPIN_RQ_DEPTH=32768 SPIN_TIMEOUT_SCALING=1000000 DEBUG=0
 	make run_allgather_perf_spin_cuda_data_2 MIN_COUNT=128 MAX_COUNT=128 WORMUP=0 ITERATIONS=10 DEBUG=0 SPIN_CQ_DEPTH=4194303 SPIN_SQ_DEPTH=16384 SPIN_RQ_DEPTH=32768 SPIN_TIMEOUT_SCALING=1000000 DEBUG=0 
 	ssh -p 12345 snail01 "perf script -i /tmp/perf.rank0.cpu0.data > /tmp/p00.out; $(FG)/stackcollapse-perf.pl /tmp/p00.out > /tmp/p00.folded; $(FG)/flamegraph.pl /tmp/p00.folded > /tmp/perf.rank0.cpu0.svg"
@@ -297,26 +298,26 @@ run_allgather_perf_spin_cuda_data:
 	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank8.cpu1.data > /tmp/p81.out; $(FG)/stackcollapse-perf.pl /tmp/p81.out > /tmp/p81.folded; $(FG)/flamegraph.pl /tmp/p81.folded > /tmp/perf.rank8.cpu1.svg"
 	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank9.cpu0.data > /tmp/p90.out; $(FG)/stackcollapse-perf.pl /tmp/p90.out > /tmp/p90.folded; $(FG)/flamegraph.pl /tmp/p90.folded > /tmp/perf.rank9.cpu0.svg"
 	ssh -p 12345 tvm02 "perf script -i /tmp/perf.rank9.cpu1.data > /tmp/p91.out; $(FG)/stackcollapse-perf.pl /tmp/p91.out > /tmp/p91.folded; $(FG)/flamegraph.pl /tmp/p91.folded > /tmp/perf.rank9.cpu1.svg"
-	scp -P 12345 snail01:/tmp/perf.rank0.cpu0.svg .
-	scp -P 12345 snail01:/tmp/perf.rank0.cpu1.svg .
-	scp -P 12345 snail01:/tmp/perf.rank1.cpu0.svg .
-	scp -P 12345 snail01:/tmp/perf.rank1.cpu1.svg .
-	scp -P 12345 snail02:/tmp/perf.rank2.cpu0.svg .
-	scp -P 12345 snail02:/tmp/perf.rank2.cpu1.svg .
-	scp -P 12345 snail02:/tmp/perf.rank3.cpu0.svg .
-	scp -P 12345 snail02:/tmp/perf.rank3.cpu1.svg .
-	scp -P 12345 snail03:/tmp/perf.rank4.cpu0.svg .
-	scp -P 12345 snail03:/tmp/perf.rank4.cpu1.svg .
-	scp -P 12345 snail03:/tmp/perf.rank5.cpu0.svg .
-	scp -P 12345 snail03:/tmp/perf.rank5.cpu1.svg .
-	scp -P 12345 tvm01:/tmp/perf.rank6.cpu0.svg .
-	scp -P 12345 tvm01:/tmp/perf.rank6.cpu1.svg .
-	scp -P 12345 tvm01:/tmp/perf.rank7.cpu0.svg .
-	scp -P 12345 tvm01:/tmp/perf.rank7.cpu1.svg .
-	scp -P 12345 tvm02:/tmp/perf.rank8.cpu0.svg .
-	scp -P 12345 tvm02:/tmp/perf.rank8.cpu1.svg .
-	scp -P 12345 tvm02:/tmp/perf.rank9.cpu0.svg .
-	scp -P 12345 tvm02:/tmp/perf.rank9.cpu1.svg .
+	scp -P 12345 snail01:/tmp/perf.rank0.cpu0.svg ./data/
+	scp -P 12345 snail01:/tmp/perf.rank0.cpu1.svg ./data/
+	scp -P 12345 snail01:/tmp/perf.rank1.cpu0.svg ./data/
+	scp -P 12345 snail01:/tmp/perf.rank1.cpu1.svg ./data/
+	scp -P 12345 snail02:/tmp/perf.rank2.cpu0.svg ./data/
+	scp -P 12345 snail02:/tmp/perf.rank2.cpu1.svg ./data/
+	scp -P 12345 snail02:/tmp/perf.rank3.cpu0.svg ./data/
+	scp -P 12345 snail02:/tmp/perf.rank3.cpu1.svg ./data/
+	scp -P 12345 snail03:/tmp/perf.rank4.cpu0.svg ./data/
+	scp -P 12345 snail03:/tmp/perf.rank4.cpu1.svg ./data/
+	scp -P 12345 snail03:/tmp/perf.rank5.cpu0.svg ./data/
+	scp -P 12345 snail03:/tmp/perf.rank5.cpu1.svg ./data/
+	scp -P 12345 tvm01:/tmp/perf.rank6.cpu0.svg ./data/
+	scp -P 12345 tvm01:/tmp/perf.rank6.cpu1.svg ./data/
+	scp -P 12345 tvm01:/tmp/perf.rank7.cpu0.svg ./data/
+	scp -P 12345 tvm01:/tmp/perf.rank7.cpu1.svg ./data/
+	scp -P 12345 tvm02:/tmp/perf.rank8.cpu0.svg ./data/
+	scp -P 12345 tvm02:/tmp/perf.rank8.cpu1.svg ./data/
+	scp -P 12345 tvm02:/tmp/perf.rank9.cpu0.svg ./data/
+	scp -P 12345 tvm02:/tmp/perf.rank9.cpu1.svg ./data/
 
 
 run_reducescatter_perf_ucp_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
