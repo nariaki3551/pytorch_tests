@@ -1,4 +1,4 @@
-DEBUG ?= 0
+DEBUG ?= 1
 SSH_PORT ?= 12345
 BACKEND ?= mpi
 DEVICE ?= cuda
@@ -70,20 +70,20 @@ run_command:
 	mpirun \
 	: -n 1 $(SNAIL01_V100_2_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
 	: -n 1 $(SNAIL01_V100_3_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(SNAIL02_V100_0_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(SNAIL02_V100_1_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(SNAIL03_V100_0_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(SNAIL03_V100_1_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(TVM01_V100_0_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(TVM01_V100_1_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(TVM02_V100_0_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
-	# : -n 1 $(TVM02_V100_1_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(SNAIL02_V100_0_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(SNAIL02_V100_1_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(SNAIL03_V100_0_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(SNAIL03_V100_1_FLAGS) -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(TVM01_V100_0_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(TVM01_V100_1_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(TVM02_V100_0_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
+	: -n 1 $(TVM02_V100_1_FLAGS)   -x UCC_CL_BASIC_TLS=$(UCC_CL_BASIC_TLS) -- $(COMMAND) \
 
 run_allgather_ucp:
 	make run_command UCC_CL_BASIC_TLS=ucp COMMAND="python3 test_allgather.py --backend $(BACKEND) --device $(DEVICE)"
 
 run_allgather_spin:
-	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND="python3 test_allgather.py --backend $(BACKEND) --device $(DEVICE)"
+	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND="python3 test_allgather.py --backend $(BACKEND) --device $(DEVICE) --count 1024"
 
 run_reducescatter_ucp:
 	make run_command UCC_CL_BASIC_TLS=ucp COMMAND="python3 test_reduce_scatter.py --backend $(BACKEND) --device $(DEVICE)"
@@ -94,8 +94,3 @@ run_reducescatter_spin:
 run_reducescatter_sharp:
 	make run_command UCC_CL_BASIC_TLS=sharp,ucp COMMAND="python3 test_reduce_scatter.py --backend $(BACKEND) --device $(DEVICE) --sharp"
 
-run_reducescatter_ucp:
-	make run_command UCC_CL_BASIC_TLS=ucp COMMAND="python3 test_reduce_scatter.py --backend $(BACKEND) --device $(DEVICE)"
-
-run_reducescatter_sharp:
-	make run_command UCC_CL_BASIC_TLS=sharp,ucp COMMAND="python3 test_reduce_scatter.py --backend $(BACKEND) --device $(DEVICE) --sharp"
