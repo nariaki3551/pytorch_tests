@@ -51,6 +51,8 @@ SPIN_FLAGS = \
 	-x UCC_TL_SPIN_MCAST_CQ_DEPTH=$(SPIN_CQ_DEPTH) \
 	-x UCC_TL_SPIN_MCAST_SQ_DEPTH=$(SPIN_SQ_DEPTH) \
 	-x UCC_TL_SPIN_MCAST_RQ_DEPTH=$(SPIN_RQ_DEPTH)
+NCCL_FLAGS = \
+	-x NCCL_SHM_DISABLE=1
 UCC_FLAGS = \
 	--mca coll_ucc_enable 1 \
 	--mca coll_ucc_priority 100 \
@@ -67,16 +69,16 @@ FLAGS += \
 	-x NCCL_DEBUG=INFO
 endif
 
-SNAIL01_V100_2_FLAGS = --host snail01:1 -x CUDA_VISIBLE_DEVICES=2 -x UCC_TL_SHARP_DEVICES=mlx5_0 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_0 -x UCC_TL_SPIN_START_CORE_ID=0 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-SNAIL01_V100_3_FLAGS = --host snail01:1 -x CUDA_VISIBLE_DEVICES=3 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=2 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-SNAIL02_V100_0_FLAGS = --host snail02:1 -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=0 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-SNAIL02_V100_1_FLAGS = --host snail02:1 -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=2 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-SNAIL03_V100_0_FLAGS = --host snail03:1 -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=0 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-SNAIL03_V100_1_FLAGS = --host snail03:1 -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=2 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-TVM01_V100_0_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=0 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-TVM01_V100_1_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=2 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-TVM02_V100_0_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=0 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
-TVM02_V100_1_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=2 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS)
+SNAIL01_V100_2_FLAGS = --host snail01:1 -x CUDA_VISIBLE_DEVICES=2 -x UCC_TL_SHARP_DEVICES=mlx5_0 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_0 -x NCCL_IB_HCA=mlx5_0 -x UCC_TL_SPIN_START_CORE_ID=5 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+SNAIL01_V100_3_FLAGS = --host snail01:1 -x CUDA_VISIBLE_DEVICES=3 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x NCCL_IB_HCA=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=9 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+SNAIL02_V100_0_FLAGS = --host snail02:1 -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x NCCL_IB_HCA=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=5 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+SNAIL02_V100_1_FLAGS = --host snail02:1 -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x NCCL_IB_HCA=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=9 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+SNAIL03_V100_0_FLAGS = --host snail03:1 -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x NCCL_IB_HCA=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=5 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+SNAIL03_V100_1_FLAGS = --host snail03:1 -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x NCCL_IB_HCA=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=9 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS) 
+TVM01_V100_0_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x NCCL_IB_HCA=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=5 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+TVM01_V100_1_FLAGS   = --host tvm01:1   -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x NCCL_IB_HCA=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=9 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+TVM02_V100_0_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=0 -x UCC_TL_SHARP_DEVICES=mlx5_1 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_1 -x NCCL_IB_HCA=mlx5_1 -x UCC_TL_SPIN_START_CORE_ID=5 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
+TVM02_V100_1_FLAGS   = --host tvm02:1   -x CUDA_VISIBLE_DEVICES=1 -x UCC_TL_SHARP_DEVICES=mlx5_2 -x UCC_TL_SPIN_IB_DEV_NAME=mlx5_2 -x NCCL_IB_HCA=mlx5_2 -x UCC_TL_SPIN_START_CORE_ID=9 $(FLAGS) $(UCC_FLAGS) $(SPIN_FLAGS) $(SHARP_FLAGS) $(NCCL_FLAGS)
 
 
 run_cuda_support_check: $(BIN_DIR)/check_cuda_support_mpi
@@ -105,7 +107,10 @@ run_allgather_spin: $(BIN_DIR)/test_allgather_mpi
 	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND=$<
 
 run_allgather_spin_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
-	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND=$<
+	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND="$< --count 1"
+
+run_allgather_nccl_cuda: $(BIN_DIR)/test_allgather_cuda_mpi
+	make run_command UCC_CL_BASIC_TLS=nccl,ucp COMMAND="$< --count 1"
 
 run_reducescatter_ucp: $(BIN_DIR)/test_reducescatter_mpi
 	make run_command UCC_CL_BASIC_TLS=ucp COMMAND=$<
@@ -133,6 +138,14 @@ perf_allgather_ucp_cuda_perf: $(BIN_DIR)/allgather_perf_cuda_mpi
 perf_allgather_spin_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
 	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND="$< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WARMUP) -n $(ITERATIONS) -s $(STEP)"
 
+perf_allgather_nccl_cuda: $(BIN_DIR)/allgather_perf_cuda_mpi
+	make run_command UCC_CL_BASIC_TLS=nccl,ucp COMMAND="$< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WARMUP) -n $(ITERATIONS) -s $(STEP)"
+
+perf_allgather_spin_cuda_test: $(BIN_DIR)/allgather_perf_cuda_mpi
+	make run_command UCC_CL_BASIC_TLS=spin,ucp COMMAND="$< -l 1024 -u 1024 -w 0 -n 1"
+
+perf_allgather_nccl_cuda_test: $(BIN_DIR)/allgather_perf_cuda_mpi
+	make run_command UCC_CL_BASIC_TLS=nccl,ucp COMMAND="$< -l 1024 -u 1024 -w 0 -n 1"
 
 perf_allgather_spin_cuda_data_1: $(BIN_DIR)/allgather_perf_cuda_mpi
 	mpirun \
@@ -200,3 +213,8 @@ perf_reducescatter_ucp_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
 perf_reducescatter_sharp_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
 	make run_command UCC_CL_BASIC_TLS=sharp,ucp COMMAND="$< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WARMUP) -n $(ITERATIONS) -s $(STEP)"
 
+perf_reducescatter_nccl_cuda: $(BIN_DIR)/reducescatter_perf_cuda_mpi
+	make run_command UCC_CL_BASIC_TLS=nccl,ucp COMMAND="$< -l $(MIN_COUNT) -u $(MAX_COUNT) -w $(WARMUP) -n $(ITERATIONS) -s $(STEP)"
+
+perf_reducescatter_nccl_cuda_test: $(BIN_DIR)/reducescatter_perf_cuda_mpi
+	make run_command UCC_CL_BASIC_TLS=nccl,ucp COMMAND="$< -l 1024 -u 1024 -w 0 -n 1"

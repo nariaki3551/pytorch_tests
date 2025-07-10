@@ -12,13 +12,13 @@ import torch.optim as optim
 
 
 class SimpleModel(nn.Module):
-    def __init__(self, scale: int, rank: int):
+    def __init__(self, scale: int, num_layers: int, rank: int):
         super(SimpleModel, self).__init__()
-        self.sequential0 = nn.Linear(512, 1024 * scale)
-        self.sequential1 = nn.Linear(1024 * scale, 1024 * scale)
-        self.sequential2 = nn.Linear(1024 * scale, 1024 * scale)
-        self.sequential3 = nn.Linear(1024 * scale, 512 * scale)
-        self.sequential4 = nn.Linear(512 * scale, 10)
+        self.sequentials = nn.ModuleList()
+        self.sequentials.append(nn.Linear(512, 1024 * scale))
+        for _ in range(num_layers):
+            self.sequentials.append(nn.Linear(1024 * scale, 1024 * scale))
+        self.sequentials.append(nn.Linear(1024 * scale, 10* scale))
       
         def register_hooks(module, module_name):
             def forward_hook(module, input, output):
@@ -30,19 +30,17 @@ class SimpleModel(nn.Module):
             module.register_forward_hook(forward_hook)
             module.register_full_backward_hook(backward_hook)
         
-        register_hooks(self.sequential0, "Linear0")
-        register_hooks(self.sequential1, "Linear1")
-        register_hooks(self.sequential2, "Linear2")
-        register_hooks(self.sequential3, "Linear3")
-        register_hooks(self.sequential4, "Linear4")
+        # register_hooks(self.sequential0, "Linear0")
+        # register_hooks(self.sequential1, "Linear1")
+        # register_hooks(self.sequential2, "Linear2")
+        # register_hooks(self.sequential3, "Linear3")
+        # register_hooks(self.sequential4, "Linear4")
 
 
     def forward(self, x):
-        x = torch.relu(self.sequential0(x))
-        x = torch.relu(self.sequential1(x))
-        x = torch.relu(self.sequential2(x))
-        x = torch.relu(self.sequential3(x))
-        return self.sequential4(x)
+        for sequential in self.sequentials:
+            x = torch.relu(sequential(x))
+        return x
 
 
 def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
@@ -59,6 +57,7 @@ def get_sharding_strategy(sharding_strategy: str) -> ShardingStrategy:
 class Config:
     sharding_strategy: ShardingStrategy = ShardingStrategy.FULL_SHARD
     model_scale: int = 1
+    num_layers: int = 1024
     batch_size: int = 32
     num_epochs: int = 5
     device: str = 'cuda'
@@ -74,12 +73,17 @@ def fsdp_training(config: Config):
     else:
         device = torch.device('cpu')
 
-    print(f'Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_epochs {config.num_epochs} and profile {config.profile}')
+    # Set default device for torch operations
+    torch.set_default_device(device)
+
+    if rank == 0:
+        print(f'Rank {rank}/{world_size}: Running FSDP with device {device} and model_scale {config.model_scale} and num_layers {config.num_layers} and num_epochs {config.num_epochs} and profile {config.profile}')
 
     def my_auto_wrap_policy(module: nn.Module, recurse: bool, nonwrapped_numel: int):
-        return isinstance(module, (SimpleModel, nn.Linear))
+        return isinstance(module, (SimpleModel, nn.Linear, nn.ModuleList))
 
-    model = SimpleModel(config.model_scale, rank).to(device)
+    # Place model on the correct device
+    model = SimpleModel(config.model_scale, config.num_layers, rank)
     model = FullyShardedDataParallel(
         model,
         device_id=config.device_id,
@@ -87,7 +91,7 @@ def fsdp_training(config: Config):
         auto_wrap_policy=my_auto_wrap_policy,
         forward_prefetch=True,
         limit_all_gathers=False,
-    ).to(device)
+    )
 
     device_name = torch.cuda.get_device_name(config.device_id) if config.device == 'cuda' else 'CPU'
     print(f'Rank {rank}/{world_size}: FSDP model created; #params: {sum(p.numel() for p in model.parameters())}; device: {device_name}')
@@ -135,7 +139,7 @@ def fsdp_training(config: Config):
         optimizer.step()
 
         if rank == 0:
-            print(f'EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.3f} seconds, loss: {loss.item():.6f}')
+            print(f'EXP: Rank {rank}/{world_size} Epoch {epoch} backward: {end - start:.6f} seconds, loss: {loss.item():.6f}')
 
     if config.profile == 'all':
         prof.stop()
@@ -165,6 +169,10 @@ if __name__ == '__main__':
         help='Model scale to use for training'
     )
     parser.add_argument(
+        '--num_layers', type=int, default=1024,
+        help='Number of layers to use for training'
+    )
+    parser.add_argument(
         '--batch_size', type=int, default=32,
         help='Batch size to use for training'
     )
@@ -189,6 +197,7 @@ if __name__ == '__main__':
     config = Config(
         sharding_strategy=get_sharding_strategy(args.sharding_strategy),
         model_scale=args.model_scale,
+        num_layers=args.num_layers,
         batch_size=args.batch_size,
         num_epochs=args.num_epochs,
         device=args.device,
