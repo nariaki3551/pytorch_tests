@@ -22,10 +22,11 @@ run_reduce_scatter_perf:
 run_allgather_perf:
 	mpirun \
 	  -n 2 $(SNAIL01_FLAGS) $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL02_FLAGS) $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(SNAIL03_FLAGS) $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(TVM01_FLAGS)   $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
-	: -n 2 $(TVM02_FLAGS)   $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+
+	# : -n 2 $(SNAIL02_FLAGS) $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	# : -n 2 $(SNAIL03_FLAGS) $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	# : -n 2 $(TVM01_FLAGS)   $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
+	# : -n 2 $(TVM02_FLAGS)   $(FLAGS) $(NCCL_TESTS_DIR)/build/all_gather_perf $(TEST_ARGS) \
 
 run_allreduce_perf:
 	mpirun \

@@ -87,6 +87,10 @@ int main(int argc, char** argv) {
         host_buff[i] = ctx.rank;
     }
     cudaMemcpy(ctx.send_buff, host_buff, ctx.count * sizeof(int), cudaMemcpyHostToDevice);
+    for (int i = 0; i < ctx.count * ctx.size; ++i) {
+        host_buff[i] = -1;
+    }
+    cudaMemcpy(ctx.recv_buff, host_buff, ctx.count * ctx.size * sizeof(int), cudaMemcpyHostToDevice);
 
 
     printf("rank %d: start iallgather with count %d\n", ctx.rank, ctx.count);
